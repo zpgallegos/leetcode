@@ -1,5 +1,5 @@
 -- https://leetcode.com/problems/dynamic-pivoting-of-a-table/
-delimiter / / CREATE PROCEDURE PivotProducts() BEGIN
+delimiter // CREATE PROCEDURE PivotProducts() BEGIN
 SET
     SESSION group_concat_max_len = 1000000;
 
@@ -35,5 +35,6 @@ EXECUTE qry;
 
 deallocate prepare qry;
 
-END / / delimiter;
+END // delimiter;
+
 
