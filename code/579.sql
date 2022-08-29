@@ -1,38 +1,29 @@
 -- https://leetcode.com/problems/find-cumulative-salary-of-an-employee/
-WITH cte AS (
-    SELECT
-        a.id,
-        a.month,
-        lag(a.month, 1) over win AS month_1,
-        lag(a.month, 2) over win AS month_2,
-        a.salary,
-        lag(a.salary, 1) over win AS salary_1,
-        lag(a.salary, 2) over win AS salary_2
-    FROM
-        Employee a
-        INNER JOIN (
-            SELECT
-                id,
-                max(MONTH) AS max_month
-            FROM
-                Employee
-            GROUP BY
-                id
-        ) b
-    WHERE
-        a.id = b.id
-        AND a.month < b.max_month window win AS (
-            PARTITION by id
-            ORDER BY
-                MONTH
-        )
+
+with base as (
+    select a.*
+    from employee a
+        inner join (
+            select id, max(month) as max_month
+            from employee
+            group by id
+        ) b on a.id = b.id and a.month < b.max_month
+), cte as (
+    select
+        *,
+        lag(month, 1) over win as month_1,
+        lag(month, 2) over win as month_2,
+        lag(salary, 1) over win as salary_1,
+        lag(salary, 2) over win as salary_2
+    from base
+    window win as (partition by id order by month)
 )
-SELECT
+
+select
     id,
-    MONTH,
-    salary + IF(MONTH - 1 = month_1, salary_1, 0) + IF(MONTH - 2 = month_2, salary_2, 0) AS Salary
-FROM
-    cte
-ORDER BY
-    id,
-    MONTH DESC
+    month,
+    salary + 
+        if(month_1 = month - 1, salary_1, 0) + 
+        if(month_2 = month - 2, salary_2, 0) as salary
+from cte
+order by id, month desc
