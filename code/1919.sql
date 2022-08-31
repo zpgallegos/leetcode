@@ -1,37 +1,13 @@
 -- https://leetcode.com/problems/leetcodify-similar-friends/
-WITH similar AS (
-    SELECT
-        DISTINCT user1,
-        user2
-    FROM
-        (
-            SELECT
-                a.user_id AS user1,
-                b.user_id AS user2,
-                b.day
-            FROM
-                listens a
-                INNER JOIN listens b ON a.song_id = b.song_id
-                AND a.day = b.day
-            WHERE
-                a.user_id < b.user_id
-            GROUP BY
-                a.user_id,
-                b.user_id,
-                b.day
-            HAVING
-                count(DISTINCT b.song_id) >= 3
-        ) q
-)
-SELECT
-    user1 as user1_id,
-    user2 as user2_id
-FROM
-    similar
-WHERE
-    (user1, user2) IN (
-        SELECT
-            *
-        FROM
-            friendship
-    )
+
+select distinct
+    a.user_id as user1_id,
+    b.user_id as user2_id
+
+from listens a
+    inner join listens b on a.day = b.day and a.song_id = b.song_id
+    inner join friendship c on a.user_id = c.user1_id and b.user_id = c.user2_id
+
+group by a.user_id, b.user_id, a.day
+
+having count(distinct a.song_id) >= 3;
