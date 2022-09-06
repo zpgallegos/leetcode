@@ -2,15 +2,16 @@
 
 with recursive cte as (
     select task_id, 1 as subtask_id
-    from Tasks
+    from tasks
 
     union
 
-    select
-        b.task_id,
-        b.subtask_id + 1 as subtask_id
-    from Tasks a inner join cte b on a.task_id = b.task_id
-    where b.subtask_id + 1 <= a.subtasks_count
+    select tasks.task_id, cte.subtask_id + 1 as subtask_id
+    from cte
+        inner join tasks on cte.subtask_id + 1 <= tasks.subtasks_count
 )
 
-select * from cte where (task_id, subtask_id) not in(select * from Executed);
+select c.*
+from cte c
+    left join executed s on c.task_id = s.task_id and c.subtask_id = s.subtask_id
+where s.subtask_id is null;

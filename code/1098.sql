@@ -1,40 +1,16 @@
 -- https://leetcode.com/problems/unpopular-books/
-SELECT
-    a.book_id,
-    a.name
-FROM
-    Books a
-    LEFT JOIN Orders b ON a.book_id = b.book_id
-WHERE
-    a.available_from <= '2019-05-23'
-GROUP BY
-    a.book_id,
-    a.name
-HAVING
-    sum(
-        CASE
-            WHEN b.dispatch_date IS NULL
-            OR b.dispatch_date < '2018-06-23' THEN 0
-            ELSE b.quantity
-        END
-    ) < 10
-    /* better ... */
-SELECT
-    book_id,
-    name
-FROM
-    books
-WHERE
-    available_from <= '2019-05-23'
-    AND book_id NOT IN(
-        SELECT
-            book_id
-        FROM
-            orders
-        WHERE
-            dispatch_date >= '2018-06-23'
-        GROUP BY
-            book_id
-        HAVING
-            sum(quantity) >= 10
-    )
+
+with bs as (
+    select *
+    from books
+    where available_from < date_sub('2019-06-23', interval 1 month)
+), ords as (
+    select book_id, sum(quantity) as sold
+    from orders
+    where dispatch_date >= date_sub('2019-06-23', interval 1 year)
+    group by book_id
+)
+
+select bs.book_id, bs.name
+from bs left join ords on bs.book_id = ords.book_id
+where ords.book_id is null or ords.sold < 10;
