@@ -1,132 +1,55 @@
 -- https://leetcode.com/problems/sales-by-day-of-the-week/
-WITH wk AS (
-    SELECT
-        *,
-        CASE
-            weekday(orders.order_date)
-            WHEN 0 THEN 'Monday'
-            WHEN 1 THEN 'Tuesday'
-            WHEN 2 THEN 'Wednesday'
-            WHEN 3 THEN 'Thursday'
-            WHEN 4 THEN 'Friday'
-            WHEN 5 THEN 'Saturday'
-            ELSE 'Sunday'
-        END AS wkday
-    FROM
-        orders
+
+with recursive weekdays as (
+    select 0 as day_int
+    union
+    select day_int + 1 from weekdays where day_int < 6
 ),
-cte AS (
-    SELECT
-        items.item_category,
-        wk.wkday,
-        sum(wk.quantity) AS qnt
-    FROM
-        wk
-        INNER JOIN items ON wk.item_id = items.item_id
-    GROUP BY
-        items.item_category,
-        wk.wkday
+cats as (
+    select 
+        b.item_category, 
+        case a.day_int
+        when 0 then 'Monday'
+        when 1 then 'Tuesday'
+        when 2 then 'Wednesday'
+        when 3 then 'Thursday'
+        when 4 then 'Friday'
+        when 5 then 'Saturday'
+        when 6 then 'Sunday'
+        end as wkday
+    from weekdays a cross join items b
 ),
-appnd AS (
-    SELECT
-        *
-    FROM
-        cte
-    UNION
-    SELECT
-        i.item_category,
-        d.wkday,
-        0 AS qnt
-    FROM
-        (
-            SELECT
-                DISTINCT item_category
-            FROM
-                items
-        ) i
-        CROSS JOIN (
-            SELECT
-                'Monday' AS wkday
-            UNION
-            SELECT
-                'Tuesday' AS wkday
-            UNION
-            SELECT
-                'Wednesday' AS wkday
-            UNION
-            SELECT
-                'Thursday' AS wkday
-            UNION
-            SELECT
-                'Friday' AS wkday
-            UNION
-            SELECT
-                'Saturday' AS wkday
-            UNION
-            SELECT
-                'Sunday' AS wkday
-        ) d
-    WHERE
-        (i.item_category, d.wkday) NOT IN (
-            SELECT
-                item_category,
-                wkday
-            FROM
-                cte
-        )
+counts as (
+    select
+        b.item_category,
+        dayname(a.order_date) as wkday,
+        sum(a.quantity) as cnt
+    from orders a inner join items b on a.item_id = b.item_id
+    group by
+        b.item_category, 
+        dayname(a.order_date)
+),
+all_counts as (
+    select * from counts
+
+    union
+
+    select a.*, 0 as cnt
+    from cats a
+        left join counts b on a.item_category = b.item_category and a.wkday = b.wkday
+    where b.wkday is null
 )
-SELECT
-    *
-FROM
-    (
-        SELECT
-            item_category AS Category,
-            sum(
-                CASE
-                    WHEN wkday = 'Monday' THEN qnt
-                    ELSE 0
-                END
-            ) AS Monday,
-            sum(
-                CASE
-                    WHEN wkday = 'Tuesday' THEN qnt
-                    ELSE 0
-                END
-            ) AS Tuesday,
-            sum(
-                CASE
-                    WHEN wkday = 'Wednesday' THEN qnt
-                    ELSE 0
-                END
-            ) AS Wednesday,
-            sum(
-                CASE
-                    WHEN wkday = 'Thursday' THEN qnt
-                    ELSE 0
-                END
-            ) AS Thursday,
-            sum(
-                CASE
-                    WHEN wkday = 'Friday' THEN qnt
-                    ELSE 0
-                END
-            ) AS Friday,
-            sum(
-                CASE
-                    WHEN wkday = 'Saturday' THEN qnt
-                    ELSE 0
-                END
-            ) AS Saturday,
-            sum(
-                CASE
-                    WHEN wkday = 'Sunday' THEN qnt
-                    ELSE 0
-                END
-            ) AS Sunday
-        FROM
-            appnd
-        GROUP BY
-            item_category
-    ) s
-ORDER BY
-    s.Category;
+
+select * from (
+    select
+        item_category as Category,
+        max(case when wkday = 'Monday' then cnt else 0 end) as 'Monday',
+        max(case when wkday = 'Tuesday' then cnt else 0 end) as 'Tuesday',
+        max(case when wkday = 'Wednesday' then cnt else 0 end) as 'Wednesday',
+        max(case when wkday = 'Thursday' then cnt else 0 end) as 'Thursday',
+        max(case when wkday = 'Friday' then cnt else 0 end) as 'Friday',
+        max(case when wkday = 'Saturday' then cnt else 0 end) as 'Saturday',
+        max(case when wkday = 'Sunday' then cnt else 0 end) as 'Sunday'
+    from all_counts
+    group by item_category
+) q order by Category;
