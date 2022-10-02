@@ -1,46 +1,34 @@
 -- https://leetcode.com/problems/tournament-winners/
-WITH cte AS (
-    SELECT
-        players.group_id,
-        scores.player_id,
-        sum(scores.score) AS total
-    FROM
-        (
-            SELECT
-                match_id,
-                first_player AS player_id,
-                first_score AS score
-            FROM
-                matches
-            UNION
-            SELECT
-                match_id,
-                second_player AS player_id,
-                second_score AS second_score
-            FROM
-                matches
-        ) scores
-        INNER JOIN players ON scores.player_id = players.player_id
-    GROUP BY
-        players.group_id,
-        scores.player_id
-),
-ranked AS (
-    SELECT
+
+with scores as (
+    select
+        match_id,
+        first_player as player,
+        first_score as score
+    from matches
+    union
+    select
+        match_id,
+        second_player as player,
+        second_score as score
+    from matches
+), grp as (
+    select
+        b.group_id,
+        a.player,
+        sum(a.score) as total
+    from scores a
+        inner join players b on a.player = b.player_id
+    group by
+        b.group_id,
+        a.player
+), ranked as (
+    select 
         *,
-        row_number() over(
-            PARTITION by group_id
-            ORDER BY
-                total DESC,
-                player_id
-        ) AS rw
-    FROM
-        cte
+        row_number() over(partition by group_id order by total desc, player) as rnk
+    from grp
 )
-SELECT
-    group_id,
-    player_id
-FROM
-    ranked
-WHERE
-    rw = 1
+
+select group_id, player as player_id
+from ranked
+where rnk = 1;
