@@ -16,3 +16,5 @@ from (
     from cte
     where rnk <= 3
 ) s inner join department on s.departmentId = department.id
+
+
