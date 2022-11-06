@@ -1,3 +1,4 @@
+-- https://leetcode.com/problems/delete-duplicate-emails/description/
 
 delete from Person where id not in (
     select sub.id from (
