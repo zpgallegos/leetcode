@@ -1,13 +1,19 @@
 -- https://leetcode.com/problems/department-highest-salary/
 
+with cte as (
+    select
+        *,
+        rank() over w as rnk
+    from employee
+    window w as (partition by departmentid order by salary desc)
+)
+
 select
-    sub.Department,
+    b.name as Department,
     a.name as Employee,
-    a.salary as Salary
+    a.salary
 
-
-from (
-    select b.id, b.name as Department, max(a.salary) as dep_max
-    from Employee a inner join Department b on a.departmentId = b.id
-    group by b.id
-) sub inner join Employee a on sub.id = a.departmentId and sub.dep_max = a.salary
+from department b inner join (
+    select * from cte
+    where rnk = 1
+    ) a on a.departmentid = b.id;
