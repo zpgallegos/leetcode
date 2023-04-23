@@ -1,22 +1,12 @@
-select
-    a.score,
-    sub.rank
-from
-    Scores a
-    inner join (
-        select
-            s.score,
-            row_number() over(
-                order by
-                    s.score desc
-            ) as "rank"
-        from
-            (
-                select
-                    distinct score
-                from
-                    Scores
-            ) s
-    ) sub on a.score = sub.score
-order by
-    a.score desc;
+-- https://leetcode.com/problems/rank-scores/
+
+with cte as (
+    select
+        score,
+        dense_rank() over(order by score desc) as "rank"
+    from scores
+)
+
+select *
+from cte
+order by cte.rank;

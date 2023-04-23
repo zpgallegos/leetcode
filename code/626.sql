@@ -1,3 +1,5 @@
+-- https://leetcode.com/problems/exchange-seats/
+
 select
     a.id,
     coalesce(b.student, a.student) as student
