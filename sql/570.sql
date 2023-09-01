@@ -2,10 +2,10 @@
 
 
 select name
-from Employee
-where id in (
-    select managerId
-    from Employee
+from employee
+where id in(
+    select managerId as id
+    from employee
     group by managerId
-    having count(distinct id) >= 5
-)
+    having count(1) >= 5
+);
