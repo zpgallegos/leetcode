@@ -1,18 +1,14 @@
--- https://leetcode.com/problems/market-analysis-i/
-
-with cte as (
-    select
-        buyer_id,
-        count(1) as orders_in_2019
-    from orders
-    where year(order_date) = 2019
-    group by buyer_id
-)
+-- https://leetcode.com/problems/market-analysis-i/description/?lang=pythondata
 
 select
-    a.user_id as buyer_id,
-    a.join_date,
-    coalesce(b.orders_in_2019, 0) as orders_in_2019
+    users.user_id as buyer_id,
+    users.join_date,
+    coalesce(sub.cnt, 0) as orders_in_2019
 
-from users a
-    left join cte b on a.user_id = b.buyer_id;
+from users
+    left join (
+        select buyer_id, count(1) as cnt
+        from orders
+        where year(order_date) = 2019
+        group by buyer_id
+    ) sub on users.user_id = sub.buyer_id;
