@@ -28,16 +28,17 @@ where
 with cte as (
     select
         *,
-        if(num = lag(num, 1) over(order by id), 0, 1) as chg -- 1 when the number changes
+        if(num != lag(num) over win, 1, 0) as changed
     from logs
-), cte2 as (
+    window win as (order by id)
+), cume as (
     select
         *,
-        sum(chg) over(order by id) as grp -- window sum to identify groups of consecutives
+        sum(changed) over(order by id) as grp
     from cte
 )
 
 select distinct num as ConsecutiveNums
-from cte2
-group by grp
+from cume
+group by num, grp
 having count(1) >= 3;

@@ -1,59 +1,27 @@
--- https://leetcode.com/problems/count-salary-categories/
-WITH cnts AS (
-    SELECT
-        CASE
-            WHEN income < 20000 THEN 0
-            WHEN income <= 50000 THEN 1
-            ELSE 2
-        END AS ord,
-        count(1) AS accounts_count
-    FROM
-        accounts
-    GROUP BY
-        CASE
-            WHEN income < 20000 THEN 0
-            WHEN income <= 50000 THEN 1
-            ELSE 2
-        END
+-- https://leetcode.com/problems/count-salary-categories/description/?lang=pythondata
+
+with cats as (
+    select "Low Salary" as category union
+    select "Average Salary" as category union
+    select "High Salary" as category
+),
+tbl as (
+    select
+        case
+        when income < 20000 then "Low Salary"
+        when income <= 50000 then "Average Salary"
+        else "High Salary"
+        end as category
+    from accounts
+),
+cnts as (
+    select category, count(1) as cnt
+    from tbl
+    group by category
 )
-SELECT
-    CASE
-        ord
-        WHEN 0 THEN 'Low Salary'
-        WHEN 1 THEN 'Average Salary'
-        ELSE 'High Salary'
-    END AS category,
-    accounts_count
-FROM
-    (
-        SELECT
-            *
-        FROM
-            cnts
-        UNION
-        SELECT
-            *
-        FROM
-            (
-                SELECT
-                    0 AS ord,
-                    0 AS accounts_count
-                UNION
-                SELECT
-                    1 AS ord,
-                    0 AS accounts_count
-                UNION
-                SELECT
-                    2 AS ord,
-                    0 AS accounts_count
-            ) s
-        WHERE
-            s.ord NOT IN(
-                SELECT
-                    ord
-                FROM
-                    cnts
-            )
-    ) q
-ORDER BY
-    q.ord
+
+select
+    cats.category,
+    coalesce(cnts.cnt, 0) as "accounts_count"
+from cats
+    left join cnts on cats.category = cnts.category;

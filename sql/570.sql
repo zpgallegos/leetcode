@@ -9,3 +9,11 @@ where id in(
     group by managerId
     having count(1) >= 5
 );
+
+select employee.name
+from (
+    select managerId
+    from employee
+    group by managerId
+    having count(1) >= 5
+    ) sub inner join employee on sub.managerId = employee.id;

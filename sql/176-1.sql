@@ -10,6 +10,6 @@ with ranked as (
         employee
 )
 
-select max(salary) as SecondHighestSalary
+select max(salary) as SecondHighestSalary -- max to return null instead of empty table
 from ranked
 where rnk = 2;
