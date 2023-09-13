@@ -3,9 +3,7 @@
 with cte as (
     select *,
         if(
-            -- customer_id=29 on last test case seems to have a bug
-            -- day difference between 2019-07-31 and 2019-08-01 is reported as 70...
-            transaction_date - lag(transaction_date) over win not in(1, 70) or
+            datediff(transaction_date, lag(transaction_date) over win) != 1 or
             amount <= lag(amount) over win, 
         1, 0) as new_seg
     from transactions
@@ -23,6 +21,3 @@ select
 from cte2
 group by customer_id, grp
 having count(1) >= 3;
-
-
-
