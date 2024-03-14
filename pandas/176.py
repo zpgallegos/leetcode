@@ -2,16 +2,16 @@
 
 import pandas as pd
 
-data = [[1, 100], [2, 200], [3, 300]]
-Employee = pd.DataFrame(data, columns=["id", "salary"]).astype(
-    {"id": "int64", "salary": "int64"}
-)
-
 
 def second_highest_salary(employee: pd.DataFrame) -> pd.DataFrame:
     s = employee.salary.drop_duplicates()
-    if len(s) < 2:
-        ans = None
-    else:
-        ans = s.nlargest(2).iloc[-1]
-    return pd.DataFrame({"SecondHighestSalary": [ans]})
+    out = s.nlargest(2).iloc[-1] if len(s) >= 2 else None
+    return pd.DataFrame({"SecondHighestSalary": [out]})
+
+
+def second_highest_salary(employee: pd.DataFrame) -> pd.DataFrame:
+    # slower
+    employee["rnk"] = employee.salary.rank(ascending=False, method="dense").astype(int)
+    sub = employee[employee.rnk == 2]
+    out = sub.iloc[0].salary if not sub.empty else None
+    return pd.DataFrame({"SecondHighestSalary": [out]})

@@ -16,7 +16,7 @@ where num = num_1 and num = num_2;
 
 -- using subqueries in the where
 
-select distinct num
+select distinct num as ConsecutiveNums
 from logs
 where 
     (id + 1, num) in (select * from logs) and 
@@ -42,3 +42,24 @@ select distinct num as ConsecutiveNums
 from cume
 group by num, grp
 having count(1) >= 3;
+
+-- T-SQL, general
+
+declare @minConsecutive int = 3;
+
+with cte as (
+    select
+        *,
+        case when num = lag(num, 1) over(order by id) then 0 else 1 end as chg
+    from logs
+), cte1 as (
+    select
+        *,
+        sum(chg) over(order by id) as grp
+    from cte
+)
+
+select distinct num as ConsecutiveNums
+from cte1
+group by grp, num
+having count(1) >= @minConsecutive;

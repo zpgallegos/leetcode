@@ -1,5 +1,10 @@
 -- https://leetcode.com/problems/second-highest-salary/
 
-select max(salary) as SecondHighestSalary
-from employee
-where salary < (select max(salary) from employee);
+with cte as (
+    select *, dense_rank() over(order by salary desc) as rn
+    from employee
+)
+
+select max(salary) as SecondHighestSalary -- max to return null instead of empty table
+from cte
+where rn = 2;
