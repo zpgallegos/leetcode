@@ -1,11 +1,11 @@
--- https://leetcode.com/problems/find-the-missing-ids/
+-- https://leetcode.com/problems/find-the-missing-ids/description/
 
-with recursive nums as (
-    select 1 as id
-    union
-    select id + 1
-    from nums
-    where id + 1 <= (select max(customer_id) from Customers)
+with recursive seq as (
+    select 1 as i union
+    select i + 1 from seq where i + 1 <= (select max(customer_id) from customers)
 )
 
-select id as ids from nums where id not in(select customer_id from Customers);
+select i as ids
+from seq
+where i not in (select customer_id from customers)
+order by i;
