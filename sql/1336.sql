@@ -1,67 +1,40 @@
--- https://leetcode.com/problems/number-of-transactions-per-visit/
-WITH recursive counts AS (
-    SELECT
-        transactions_count,
-        count(1) AS visits_count
-    FROM
-        (
-            SELECT
-                v.user_id,
-                v.visit_date,
-                count(t.transaction_date) AS transactions_count
-            FROM
-                visits v
-                LEFT JOIN transactions t ON v.user_id = t.user_id
-                AND v.visit_date = t.transaction_date
-            GROUP BY
-                v.user_id,
-                v.visit_date
-        ) s
-    GROUP BY
-        transactions_count
+-- https://leetcode.com/problems/number-of-transactions-per-visit/description/
+
+with recursive trans as (
+    select a.*, row_number() over() as trans_id
+    from transactions a
 ),
-cte AS (
-    SELECT
-        *
-    FROM
-        (
-            SELECT
-                transactions_count,
-                visits_count
-            FROM
-                counts
-            WHERE
-                transactions_count = 0
-            UNION
-            SELECT
-                0 AS transactions_count,
-                0 AS visits_count
-            FROM
-                counts
-            WHERE
-                0 NOT IN(
-                    SELECT
-                        transactions_count
-                    FROM
-                        counts
-                )
-        ) s
-    UNION
-    SELECT
-        cte.transactions_count + 1,
-        coalesce(counts.visits_count, 0) AS visits_count
-    FROM
-        cte
-        LEFT JOIN counts ON counts.transactions_count = cte.transactions_count + 1
-    WHERE
-        cte.transactions_count + 1 <= (
-            SELECT
-                max(transactions_count)
-            FROM
-                counts
-        )
+cte as (
+    select
+        a.user_id,
+        a.visit_date,
+        count(distinct trans_id) as ntrans
+    from visits a
+        left join trans b on a.user_id = b.user_id and a.visit_date = b.transaction_date
+    group by 1, 2
+),
+cnts as (
+    select
+        a.ntrans,
+        count(1) as cnt
+    from cte a
+    group by a.ntrans
+),
+seq as (
+    select 0 as i union
+    select i + 1 from seq where i + 1 <= (select max(ntrans) from cnts)
+),
+fill as (
+    select a.i as ntrans, 0 as cnt
+    from seq a
+    where a.i not in(select ntrans from cnts)
 )
-SELECT
-    *
-FROM
-    cte;
+
+select
+    sub.ntrans as transactions_count,
+    sub.cnt as visits_count
+from (
+    select * from cnts union
+    select * from fill
+) sub
+order by 1;
