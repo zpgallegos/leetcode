@@ -4,10 +4,9 @@ import pandas as pd
 
 
 def number_of_passengers(buses: pd.DataFrame, passengers: pd.DataFrame) -> pd.DataFrame:
-    passengers["waiting"] = True
-    passengers = passengers.sort_values("arrival_time").set_index("passenger_id")
-
     buses = buses.set_index("bus_id")
+    passengers["waiting"] = True
+    passengers = passengers.set_index("passenger_id")
 
     out = {}
     for bus in buses.itertuples():
