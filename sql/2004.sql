@@ -1,32 +1,35 @@
-insert into leetcode.Candidates values
-(1, 'Junior', 10000),
-(9, 'Junior', 10000),
-(2, 'Senior', 20000),
-(11, 'Senior', 20000),
-(13, 'Senior', 50000),
-(4, 'Senior', 40000);
+-- https://leetcode.com/problems/the-number-of-seniors-and-juniors-to-join-the-company/description/
 
 
 with ordered as (
     select
-        *, 
-        row_number() over(partition by experience order by salary) as rw
-    from Candidates
-), cum as (
-    select *, sum(salary) over(partition by experience order by rw) as spent
-    from ordered
-    order by experience, rw
-), seniors_hired as (
-    select 'Senior' as experience, max(rw) as hired, max(spent) as spent
-    from cum
-    where experience = 'Senior' and spent <= 70000
-), juniors_hired as (
-    select 'Junior' as experience, max(rw) as hired
-    from cum
-    where experience = 'Junior' and spent <= 70000 - (select coalesce(max(spent), 0) from seniors_hired)
+        a.*,
+        row_number() over win as cum_hired,
+        sum(a.salary) over win as cum_spent
+    from candidates a
+    window win as (partition by a.experience order by a.salary)
+),
+seniors as (
+    select
+        'Senior' as experience,
+        coalesce(max(a.cum_hired), 0) as accepted_candidates,
+        coalesce(max(a.cum_spent), 0) as senior_spent
+    from ordered a
+    where
+        1=1 
+        and a.experience = 'Senior'
+        and a.cum_spent <= 70000
+),
+juniors as (
+    select
+        'Junior' as experience,
+        coalesce(max(a.cum_hired), 0) as accepted_candidates
+    from ordered a
+    where
+        1=1
+        and experience = 'Junior'
+        and a.cum_spent <= 70000 - (select senior_spent from seniors)
 )
 
-
-select experience, coalesce(hired, 0) as accepted_candidates from seniors_hired
-union
-select experience, coalesce(hired, 0) as accepted_candidates from juniors_hired;
+select experience, accepted_candidates from seniors union
+select * from juniors;

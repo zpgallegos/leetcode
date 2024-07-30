@@ -1,13 +1,19 @@
--- https://leetcode.com/problems/leetcodify-similar-friends/
+-- https://leetcode.com/problems/leetcodify-similar-friends/description/
 
 select distinct
-    a.user_id as user1_id,
-    b.user_id as user2_id
+    a.user1_id,
+    a.user2_id
 
-from listens a
-    inner join listens b on a.day = b.day and a.song_id = b.song_id
-    inner join friendship c on a.user_id = c.user1_id and b.user_id = c.user2_id
+from friendship a
+    inner join listens b on a.user1_id = b.user_id
+    inner join listens c on 
+        a.user2_id = c.user_id and 
+        b.day = c.day and
+        b.song_id = c.song_id
 
-group by a.user_id, b.user_id, a.day
+group by 
+    a.user1_id,
+    a.user2_id,
+    b.day
 
-having count(distinct a.song_id) >= 3;
+having count(distinct b.song_id) >= 3;
