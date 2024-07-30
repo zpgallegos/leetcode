@@ -1,21 +1,20 @@
 -- https://leetcode.com/problems/students-report-by-geography/
 
-with america as (
-    select name as America, row_number() over(order by name) as rw
-    from Student
-    where continent = 'America'
-), asia as (
-    select name as Asia, row_number() over(order by name) as rw
-    from Student
-    where continent = 'Asia'
-), europe as (
-    select name as Europe, row_number() over(order by name) as rw
-    from Student
-    where continent = 'Europe'
-)
+with cte as (
+    select
+        a.*,
+        row_number() over(partition by a.continent order by a.name) as rn
+    from student a
+),
+america as (select * from cte where continent = 'America'),
+asia as (select * from cte where continent = 'Asia'),
+europe as (select * from cte where continent = 'Europe')
 
-select a.America, b.Asia, c.Europe
+select
+    a.name as America,
+    b.name as Asia,
+    c.name as Europe
 from america a
-    left join asia b on a.rw = b.rw
-    left join europe c on a.rw = c.rw
-order by a.rw;
+    left join asia b on a.rn = b.rn
+    left join europe c on a.rn = c.rn
+order by a.rn;
