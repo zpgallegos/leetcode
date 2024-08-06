@@ -1,41 +1,31 @@
 -- https://leetcode.com/problems/average-salary-departments-vs-company/
-WITH cte AS (
-    SELECT
-        emp.department_id,
-        date_format(sal.pay_date, '%Y-%m') AS pay_month,
-        sal.amount
-    FROM
-        salary sal
-        INNER JOIN Employee emp ON sal.employee_id = emp.employee_id
+
+with sal as (
+    select
+        date_format(a.pay_date, '%Y-%m') AS pay_month,
+        b.department_id,
+        a.amount
+    from salary a
+        inner join employee b on a.employee_id = b.employee_id
 ),
-dep_avg AS (
-    SELECT
-        department_id,
-        pay_month,
-        avg(amount) AS dep_avg
-    FROM
-        cte
-    GROUP BY
-        department_id,
-        pay_month
+month_avg as (
+    select pay_month, avg(amount) as month_avg
+    from sal
+    group by 1
 ),
-month_avg AS (
-    SELECT
-        pay_month,
-        avg(amount) AS month_avg
-    FROM
-        cte
-    GROUP BY
-        pay_month
+dep_avg as (
+    select pay_month, department_id, avg(amount) as dep_avg
+    from sal
+    group by 1, 2
 )
-SELECT
+
+select
     a.pay_month,
     a.department_id,
-    CASE
-        WHEN a.dep_avg > b.month_avg THEN 'higher'
-        WHEN a.dep_avg = b.month_avg THEN 'same'
-        ELSE 'lower'
-    END AS comparison
-FROM
-    dep_avg a
-    INNER JOIN month_avg b ON a.pay_month = b.pay_month
+    case
+        when a.dep_avg > b.month_avg then 'higher'
+        when a.dep_avg = b.month_avg then 'same'
+        else 'lower'
+    end as comparison
+from dep_avg a
+    inner join month_avg b on a.pay_month = b.pay_month;

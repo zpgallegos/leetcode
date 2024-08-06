@@ -1,16 +1,8 @@
 -- https://leetcode.com/problems/status-of-flight-tickets/
 
-with cte as (
-    select
-        p.passenger_id,
-        p.flight_id,
-        f.capacity,
-        row_number() over(partition by p.flight_id order by p.booking_time) as ord
-
-    from passengers p
-        inner join flights f on p.flight_id = f.flight_id
-)
-
-select passenger_id, if(ord <= capacity, "Confirmed", "Waitlist") as Status
-from cte
-order by passenger_id;
+select
+    a.passenger_id,
+    if(row_number() over(partition by a.flight_id order by a.booking_time) <= b.capacity, 'Confirmed', 'Waitlist') as Status
+from passengers a
+    inner join flights b on a.flight_id = b.flight_id
+order by a.passenger_id;
