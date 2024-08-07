@@ -1,24 +1,16 @@
 -- https://leetcode.com/problems/server-utilization-time/description/
 
 
-
-with stg as (
+with cte as (
     select
-        *,
-        lag(session_status, 1) over w as last_status,
-        lag(status_time, 1) over w as last_time
-    from servers
-    window w as (partition by server_id order by status_time)
-), cte as (
-    select
-        *,
-        case
-        when session_status = 'stop' and last_status = 'start' then
-            extract(EPOCH from (status_time - last_time))
-        else 0
-        end as diff_seconds
-    from stg
+        a.server_id,
+        a.status_time,
+        a.session_status,
+        coalesce(timestampdiff(second, lag(a.status_time, 1) over w, a.status_time), 0) as diff
+    from servers a
+    window w as (partition by a.server_id order by a.status_time)
 )
 
-select sum(diff_seconds)::int / 86400 as total_uptime_days
-from cte;
+select cast(floor(sum(diff) / 86400) as unsigned) as total_uptime_days
+from cte
+where session_status = 'stop'
