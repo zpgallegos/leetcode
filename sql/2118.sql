@@ -1,24 +1,16 @@
 -- https://leetcode.com/problems/build-the-equation/
 
 
-select
-    concat(
-        group_concat(term order by power desc separator ''),
-        '=0'
-    ) as equation
-
-from (
+with cte as (
     select
-        power,
+        a.power,
         concat(
-            if(factor < 0, '-', '+'),
-            abs(factor),
-            case power
-            when 0 then ''
-            when 1 then 'X'
-            else concat('X^', power)
-            end
+            if(a.factor < 0, '-', '+'),
+            abs(a.factor),
+            if(a.power > 0, if(a.power = 1, 'X', concat('X^', a.power)), '')
         ) as term
+    from terms a
+)
 
-    from terms
-) q
+select concat(group_concat(a.term order by a.power desc separator ''), '=0') as equation
+from cte a
