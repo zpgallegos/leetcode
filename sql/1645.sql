@@ -1,88 +1,46 @@
 -- https://leetcode.com/problems/hopper-company-queries-ii/
-WITH recursive months AS (
-    SELECT
-        1 AS mnth
-    UNION
-    SELECT
-        mnth + 1
-    FROM
-        months
-    WHERE
-        mnth < 12
+
+with recursive date_range as(
+    select '2020-01-01' as dt
+    union all
+    select dt + interval 1 day from date_range where dt < '2020-12-31'
 ),
-drive AS (
-    SELECT
-        months.mnth,
-        coalesce(
-            max(q.n_drivers) over(
-                ORDER BY
-                    months.mnth
-            ),
-            0
-        ) AS active_drivers
-    FROM
-        months
-        LEFT JOIN (
-            SELECT
-                mnth,
-                max(n_drivers) AS n_drivers
-            FROM
-                (
-                    SELECT
-                        join_date,
-                        MONTH(join_date) AS mnth,
-                        count(1) over(
-                            ORDER BY
-                                join_date
-                        ) AS n_drivers
-                    FROM
-                        drivers
-                ) s
-            WHERE
-                year(join_date) = 2020
-            GROUP BY
-                mnth
-        ) q ON months.mnth = q.mnth
+all_months as (
+    select
+        month(dt) as month,
+        max(dt) as month_last_day
+    from date_range
+    group by 1
 ),
-accepted AS (
-    SELECT
-        MONTH(rides.requested_at) AS mnth,
-        count(DISTINCT drivers.driver_id) AS drivers
-    FROM
-        rides
-        INNER JOIN acceptedrides acc ON rides.ride_id = acc.ride_id
-        INNER JOIN drivers ON acc.driver_id = drivers.driver_id
-    WHERE
-        year(rides.requested_at) = 2020
-    GROUP BY
-        MONTH(rides.requested_at)
+driver_cnts_stg as (
+    select
+        b.month,
+        count(1) as n_drivers
+    from drivers a 
+        inner join all_months b on a.join_date <= b.month_last_day
+    group by 1
+),
+driver_cnts as (
+    select * from driver_cnts_stg union
+    select a.month, 0 as n_drivers from all_months a where a.month not in(select month from driver_cnts_stg)
+),
+working_cnts_stg as (
+    select
+        month(a.requested_at) as month,
+        count(distinct b.driver_id) as n_working
+    from rides a
+        inner join acceptedrides b on a.ride_id = b.ride_id
+    where a.requested_at between '2020-01-01' and '2020-12-31'
+    group by 1
+),
+working_cnts as (
+    select * from working_cnts_stg union
+    select a.month, 0 as n_working from all_months a where a.month not in(select month from working_cnts_stg)
 )
-SELECT
-    drive.mnth AS MONTH,
-    CASE
-        WHEN drive.active_drivers > 0 THEN round(100 * s.drivers / drive.active_drivers, 2)
-        ELSE 0
-    END AS working_percentage
-FROM
-    drive
-    INNER JOIN (
-        SELECT
-            *
-        FROM
-            accepted
-        UNION
-        SELECT
-            mnth,
-            0
-        FROM
-            months
-        WHERE
-            mnth NOT IN(
-                SELECT
-                    mnth
-                FROM
-                    accepted
-            )
-    ) s ON drive.mnth = s.mnth
-ORDER BY
-    drive.mnth
+
+select
+    a.month,
+    coalesce(round((b.n_working / a.n_drivers) * 100, 2), 0) as working_percentage
+from driver_cnts a
+    inner join working_cnts b on a.month = b.month
+order by 1;
