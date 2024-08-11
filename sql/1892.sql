@@ -1,28 +1,19 @@
 -- https://leetcode.com/problems/page-recommendations-ii/
-WITH friends AS (
-    SELECT
-        user1_id AS user_id,
-        user2_id AS friend_id
-    FROM
-        friendship
-    UNION
-    SELECT
-        user2_id AS user_id,
-        user1_id AS friend_id
-    FROM
-        friendship
+
+with flc as (
+    select
+        a.user_id,
+        b.page_id,
+        count(1) as friends_likes
+    from (
+        select user1_id as user_id, user2_id as friend_id from friendship union
+        select user2_id as user_id, user1_id as friend_id from friendship
+    ) a
+        inner join likes b on a.friend_id = b.user_id
+    group by 1, 2
 )
-SELECT
-    a.user_id,
-    b.page_id,
-    count(1) AS friends_likes
-FROM
-    friends a
-    INNER JOIN likes b ON a.friend_id = b.user_id
-    LEFT JOIN likes c ON a.user_id = c.user_id
-    AND b.page_id = c.page_id
-WHERE
-    c.page_id IS NULL
-GROUP BY
-    a.user_id,
-    b.page_id
+
+select a.*
+from flc a
+    left join likes b on a.user_id = b.user_id and a.page_id = b.page_id
+where b.user_id is null;
