@@ -1,77 +1,51 @@
 -- https://leetcode.com/problems/monthly-transactions-ii/
-WITH t AS (
-    SELECT
-        *,
-        date_format(trans_date, '%Y-%m') AS "month"
-    FROM
-        Transactions
+
+with trans as (
+    select a.*, date_format(a.trans_date, '%Y-%m') as month
+    from transactions a
+    where a.state = 'approved'
 ),
-c AS (
-    SELECT
-        *,
-        date_format(trans_date, '%Y-%m') AS "month"
-    FROM
-        Chargebacks
+chgs as (
+    select
+        b.id,
+        b.country,
+        date_format(a.trans_date, '%Y-%m') as month,
+        b.amount
+    from chargebacks a
+        inner join transactions b on a.trans_id = b.id
 ),
-approved AS (
-    SELECT
-        t.month,
-        t.country,
-        sum(t.state = 'approved') AS approved_count,
-        sum(IF(t.state = 'approved', amount, 0)) AS approved_amount
-    FROM
-        t
-    GROUP BY
-        t.month,
-        t.country
+app as (
+    select a.month, a.country, 'ac' as stat, count(1) as val
+    from trans a
+    group by 1, 2, 3
+
+    union
+
+    select a.month, a.country, 'aa' as stat, sum(a.amount) as val
+    from trans a
+    group by 1, 2, 3
 ),
-chargebacks AS (
-    SELECT
-        c.month,
-        t.country,
-        count(1) AS chargeback_count,
-        sum(t.amount) AS chargeback_amount
-    FROM
-        c
-        INNER JOIN t ON c.trans_id = t.id
-    GROUP BY
-        c.month,
-        t.country
+chg as (
+    select a.month, a.country, 'cc' as stat, count(1) as val
+    from chgs a
+    group by 1, 2, 3
+
+    union
+
+    select a.month, a.country, 'ca' as stat, sum(a.amount) as val
+    from chgs a
+    group by 1, 2, 3
 )
-SELECT
-    *
-FROM
-    (
-        SELECT
-            a.*,
-            coalesce(b.chargeback_count, 0) AS chargeback_count,
-            coalesce(b.chargeback_amount, 0) AS chargeback_amount
-        FROM
-            approved a
-            LEFT JOIN chargebacks b ON a.month = b.month
-            AND a.country = b.country
-        UNION
-        SELECT
-            a.month,
-            a.country,
-            coalesce(b.approved_count, 0) AS approved_count,
-            coalesce(b.approved_amount, 0) AS approved_amount,
-            a.chargeback_count,
-            a.chargeback_amount
-        FROM
-            chargebacks a
-            LEFT JOIN approved b ON a.month = b.month
-            AND a.country
-            AND b.country
-        WHERE
-            (a.month, a.country) NOT IN (
-                SELECT
-                    MONTH,
-                    country
-                FROM
-                    approved
-            )
-    ) q
-WHERE
-    approved_count > 0
-    OR chargeback_count > 0
+
+select
+    a.month,
+    a.country,
+    max(case when a.stat = 'ac' then a.val else 0 end) as approved_count,
+    max(case when a.stat = 'aa' then a.val else 0 end) as approved_amount,
+    max(case when a.stat = 'cc' then a.val else 0 end) as chargeback_count,
+    max(case when a.stat = 'ca' then a.val else 0 end) as chargeback_amount
+from (
+    select * from app union
+    select * from chg
+) a
+group by 1, 2;
