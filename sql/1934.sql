@@ -1,27 +1,17 @@
 -- https://leetcode.com/problems/confirmation-rate/
-WITH rates AS (
-    SELECT
-        user_id,
-        round(sum(ACTION = 'confirmed') / count(1), 2) AS confirmation_rate
-    FROM
-        confirmations
-    GROUP BY
-        user_id
+
+with rates as (
+    select
+        a.user_id,
+        round(avg(if(a.action = 'confirmed', 1, 0)), 2) as confirmation_rate
+    from confirmations a
+    group by 1
 )
-SELECT
-    *
-FROM
-    rates
-UNION
-SELECT
-    user_id,
-    0 AS confirmation_rate
-FROM
-    Signups
-WHERE
-    user_id NOT IN(
-        SELECT
-            user_id
-        FROM
-            rates
-    );
+
+select * from rates
+
+union
+
+select a.user_id, 0 as confirmation_rate
+from signups a
+where a.user_id not in(select user_id from rates);
