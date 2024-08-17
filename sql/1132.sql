@@ -1,22 +1,20 @@
 -- https://leetcode.com/problems/reported-posts-ii/
-SELECT
-    round(avg(day_prop) * 100, 2) AS average_daily_percent
-FROM
-    (
-        SELECT
-            spam.action_date,
-            avg(b.remove_date IS NOT NULL) AS day_prop
-        FROM
-            (
-                SELECT
-                    DISTINCT post_id,
-                    action_date
-                FROM
-                    actions
-                WHERE
-                    extra = 'spam'
-            ) spam
-            LEFT JOIN removals b ON spam.post_id = b.post_id
-        GROUP BY
-            spam.action_date
-    ) s
+
+with spam as (
+    select distinct
+        a.post_id,
+        a.action_date
+    from actions a
+    where a.extra = 'spam'
+),
+daily as (
+    select
+        a.action_date,
+        avg(if(b.remove_date is not null, 1, 0)) as prop
+    from spam a
+        left join removals b on a.post_id = b.post_id
+    group by 1
+)
+
+select round(avg(a.prop) * 100, 2) as average_daily_percent
+from daily a;
