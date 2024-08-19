@@ -1,24 +1,30 @@
--- https://leetcode.com/problems/customers-with-maximum-number-of-transactions-on-consecutive-days/
+-- https://leetcode.com/problems/customers-with-maximum-number-of-transactions-on-consecutive-days/description/
 
-with cte as (
+with lagged as (
     select
-        *,
-        if(
-            transaction_date - lag(transaction_date) over(partition by customer_id order by transaction_date) > 1, 1, 0
-        ) as chg
-    from transactions
-), grpd as (
+        a.*,
+        lag(a.transaction_date, 1) over(partition by a.customer_id order by a.transaction_date) as last_date
+    from transactions a
+),
+incr as (
     select
-        *,
-        sum(chg) over(partition by customer_id order by transaction_date) as grp
-    from cte
-), cnts as (
-    select customer_id, grp, count(1) as cnt
-    from grpd
-    group by customer_id, grp
+        a.*,
+        if(a.last_date is null or a.transaction_date - a.last_date > 1, 1, 0) as incr
+    from lagged a
+),
+grpd as (
+    select
+        a.*,
+        sum(a.incr) over(partition by a.customer_id order by a.transaction_date) as grp
+    from incr a
+),
+cnts as (
+    select a.customer_id, a.grp, count(1) as cnt
+    from grpd a
+    group by 1, 2
 )
 
-select customer_id
-from cnts
-where cnt = (select max(cnt) from cnts)
-order by customer_id;
+select a.customer_id
+from cnts a
+where a.cnt = (select max(cnt) from cnts)
+order by 1;
