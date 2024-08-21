@@ -1,37 +1,25 @@
 -- https://leetcode.com/problems/generate-the-invoice/
-WITH totals AS (
-    SELECT
-        purchases.invoice_id,
-        sum(purchases.quantity * products.price) AS ttl
-    FROM
-        purchases
-        INNER JOIN products ON purchases.product_id = products.product_id
-    GROUP BY
-        purchases.invoice_id
-),
-ranked AS (
-    SELECT
-        *,
-        rank() over(
-            ORDER BY
-                ttl DESC,
-                invoice_id
-        ) AS rnk
-    FROM
-        totals
+
+with cte as (
+    select
+        sub.invoice_id,
+        row_number() over win as rn
+    from (
+        select
+            a.invoice_id,
+            sum(a.quantity * b.price) as invoice_total
+        from purchases a
+            inner join products b on a.product_id = b.product_id
+        group by 1
+    ) sub
+    window win as (order by sub.invoice_total desc, sub.invoice_id)
 )
-SELECT
-    purchases.product_id,
-    purchases.quantity,
-    purchases.quantity * products.price as price
-FROM
-    purchases
-    INNER JOIN products ON purchases.product_id = products.product_id
-    INNER JOIN (
-        SELECT
-            invoice_id
-        FROM
-            ranked
-        WHERE
-            rnk = 1
-    ) q ON purchases.invoice_id = q.invoice_id
+
+select
+    a.product_id,
+    a.quantity,
+    sum(a.quantity * b.price) as price
+from purchases a
+    inner join products b on a.product_id = b.product_id
+where a.invoice_id = (select invoice_id from cte where rn = 1)
+group by 1, 2;

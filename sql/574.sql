@@ -1,28 +1,14 @@
--- https://leetcode.com/problems/winning-candidate/
-WITH cte AS (
-    SELECT
-        candidateId,
-        count(1) AS votes
-    FROM
-        Vote
-    GROUP BY
-        candidateId
+-- https://leetcode.com/problems/winning-candidate/description/
+
+with cte as (
+    select
+        b.name,
+        count(1) as cnt
+    from vote a
+        inner join candidate b on a.candidateId = b.id
+    group by 1
 )
-SELECT
-    name
-FROM
-    Candidate
-WHERE
-    id = (
-        SELECT
-            candidateId
-        FROM
-            cte
-        WHERE
-            votes = (
-                SELECT
-                    max(votes)
-                FROM
-                    cte
-            )
-    )
+
+select a.name
+from cte a
+where a.cnt = (select max(cnt) from cte);
