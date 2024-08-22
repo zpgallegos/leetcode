@@ -1,17 +1,18 @@
 -- https://leetcode.com/problems/find-the-subtasks-that-did-not-execute/
 
-with recursive cte as (
+with recursive expected as (
     select task_id, 1 as subtask_id
     from tasks
 
     union
 
-    select tasks.task_id, cte.subtask_id + 1 as subtask_id
-    from cte
-        inner join tasks on cte.subtask_id + 1 <= tasks.subtasks_count
+    select a.task_id, a.subtask_id + 1 as subtask_id
+    from expected a
+        inner join tasks b on a.task_id = b.task_id
+    where a.subtask_id < b.subtasks_count
 )
 
-select c.*
-from cte c
-    left join executed s on c.task_id = s.task_id and c.subtask_id = s.subtask_id
-where s.subtask_id is null;
+select a.*
+from expected a
+    left join executed b on a.task_id = b.task_id and a.subtask_id = b.subtask_id
+where b.subtask_id is null;

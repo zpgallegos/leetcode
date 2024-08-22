@@ -1,42 +1,41 @@
 -- https://leetcode.com/problems/restaurant-growth/
 
-with daily as (
-    select visited_on, sum(amount) as sm
-    from Customer
-    group by visited_on
-)
-
-select * from (
+with day_totals as (
     select
         a.visited_on,
-        sum(b.sm) as amount,
-        round(avg(b.sm), 2) as average_amount
+        sum(a.amount) as amount
+    from customer a
+    group by 1
+), cte as (
+    select
+        a.visited_on,
+        sum(a.amount) over win as amount,
+        round(avg(a.amount) over win, 2) as average_amount,
+        count(a.amount) over win as day_count
+    from day_totals a
+    window win as (order by a.visited_on rows between 6 preceding and current row)
+)
 
-    from daily a cross join daily b
-    where b.visited_on between date_sub(a.visited_on, interval 6 day) and a.visited_on
-    group by a.visited_on
-    having count(b.visited_on) = 7
-) s order by visited_on;
+select visited_on, amount, average_amount
+from cte
+where day_count = 7;
 
--- with window functions
+-- without window functions...
 
-with daily as (
-    select visited_on, sum(amount) as amount
-    from Customer
-    group by visited_on
+with day_totals as (
+    select
+        a.visited_on,
+        sum(a.amount) as amount
+    from customer a
+    group by 1
 )
 
 select
-    s.visited_on,
-    s.running as amount,
-    round(s.running / 7, 2) as average_amount
-
-from (
-    select
-        visited_on,
-        rank() over(order by visited_on) as days_in,
-        sum(amount) over(order by visited_on rows between 6 preceding and current row) as running
-    from daily
-) s
-where s.days_in >= 7
-order by s.visited_on
+    a.visited_on,
+    sum(b.amount) as amount,
+    round(avg(b.amount), 2) as average_amount
+from day_totals a
+    inner join day_totals b on b.visited_on between date_sub(a.visited_on, interval 6 day) and a.visited_on
+group by 1
+having count(b.visited_on) = 7
+order by 1;
