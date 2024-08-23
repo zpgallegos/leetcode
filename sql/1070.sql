@@ -1,38 +1,31 @@
 -- https://leetcode.com/problems/product-sales-analysis-iii/
-SELECT
+
+
+with cte as (
+    select
+        a.product_id,
+        min(a.year) as first_year
+    from sales a
+    group by 1
+)
+
+select
     a.product_id,
-    s.first_year,
+    b.first_year,
     a.quantity,
     a.price
-FROM
-    sales a
-    INNER JOIN (
-        SELECT
-            product_id,
-            min(year) AS first_year
-        FROM
-            sales
-        GROUP BY
-            product_id
-    ) s ON a.product_id = s.product_id
-    AND a.year = s.first_year;
+from sales a
+    inner join cte b on a.product_id = b.product_id and a.year = b.first_year;
 
-SELECT
-    product_id,
-    a.year AS first_year,
-    quantity,
-    price
-FROM
-    (
-        SELECT
-            *,
-            rank() over(
-                PARTITION by product_id
-                ORDER BY
-                    year
-            ) AS rnk
-        FROM
-            sales
-    ) a
-WHERE
-    rnk = 1
+-- with window functions...
+
+with cte as (
+    select
+        a.*,
+        rank() over(partition by a.product_id order by a.year) as rn
+    from sales a
+)
+
+select product_id, year as first_year, quantity, price
+from cte
+where rn = 1;
