@@ -1,10 +1,13 @@
--- https://leetcode.com/problems/second-highest-salary/
+-- https://leetcode.com/problems/second-highest-salary/description/
 
 with cte as (
-    select *, dense_rank() over(order by salary desc) as rn
-    from employee
+    select
+        a.salary,
+        dense_rank() over win as rnk
+    from employee a
+    window win as (order by a.salary desc)
 )
 
-select max(salary) as SecondHighestSalary -- max to return null instead of empty table
+select max(salary) as SecondHighestSalary
 from cte
-where rn = 2;
+where rnk = 2;

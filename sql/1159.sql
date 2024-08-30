@@ -1,26 +1,21 @@
--- https://leetcode.com/problems/market-analysis-ii/
+-- https://leetcode.com/problems/market-analysis-ii/description/
 
-with seconds as (
-    select *
-    from (
-        select
-            *,
-            rank() over(partition by seller_id order by order_date) as rnk
-        from orders
-    ) q
-    where rnk = 2
+
+with ranked as (
+    select
+        a.seller_id,
+        b.item_brand,
+        row_number() over win as rn
+    from orders a
+        inner join items b on a.item_id = b.item_id
+    window win as (partition by a.seller_id order by a.order_date)
+),
+secnd as (
+    select * from ranked where rn = 2
 )
 
 select
-    seconds.seller_id,
-    if(users.favorite_brand = items.item_brand, 'yes', 'no') as 2nd_item_fav_brand
-
-from seconds
-    inner join users on seconds.seller_id = users.user_id
-    inner join items on seconds.item_id = items.item_id
-
-union
-
-select user_id as seller_id, 'no' as 2nd_item_fav_brand
-from users
-where user_id not in(select seller_id from seconds)
+    a.user_id as seller_id,
+    if(b.seller_id is null or a.favorite_brand != b.item_brand, 'no', 'yes') as 2nd_item_fav_brand
+from users a
+    left join secnd b on a.user_id = b.seller_id;

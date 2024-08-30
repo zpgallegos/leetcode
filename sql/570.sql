@@ -1,13 +1,13 @@
 -- https://leetcode.com/problems/managers-with-at-least-5-direct-reports/
 
-
-with cte as (
+with qual as (
     select managerId
     from employee
     group by managerId
-    having count(distinct id) >= 5
+    having count(1) >= 5
 )
 
-select name
-from employee
-where id in(select * from cte);
+
+select b.name
+from qual a 
+    inner join employee b on a.managerId = b.id

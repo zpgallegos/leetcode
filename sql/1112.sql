@@ -1,12 +1,17 @@
+-- https://leetcode.com/problems/highest-grade-for-each-student/
 
-with max_grade as (
+with cte as (
     select
-        *,
-        row_number() over(partition by student_id order by grade desc, course_id) as rw
-    
-    from Enrollments
+        a.*,
+        row_number() over win as rn
+    from enrollments a
+    window win as (partition by a.student_id order by a.grade desc, a.course_id)
 )
 
-select student_id, course_id, grade
-from max_grade
-where rw = 1;
+select
+    a.student_id,
+    a.course_id,
+    a.grade
+from cte a
+where a.rn = 1
+order by 1;

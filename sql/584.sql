@@ -1,5 +1,7 @@
-select name
+-- https://leetcode.com/problems/find-customer-referee/description/
 
-from Customer
-
-where referee_id is null or referee_id <> 2
+select a.name
+from customer a
+where
+    a.referee_id is null or
+    a.referee_id != 2;

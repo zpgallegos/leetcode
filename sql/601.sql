@@ -2,20 +2,24 @@
 
 with cte as (
     select
-        *,
-        id - row_number() over(order by id) as grp
-    from stadium
-    where people >= 100
+        a.*,
+        if(a.id - lag(a.id, 1) over win = 1, 0, 1) as incr
+    from stadium a
+    where a.people >= 100
+    window win as (order by a.visit_date)
+),
+grpd as (
+    select
+        a.*,
+        sum(a.incr) over win as grp
+    from cte a
+    window win as (order by a.visit_date rows between unbounded preceding and current row)
 )
 
-select
-    id,
-    visit_date,
-    people
-from cte
-where grp in (
-    select grp 
-    from cte
-    group by grp
-    having count(1) >= 3
-);
+select 
+    a.id,
+    a.visit_date,
+    a.people
+from grpd a
+where a.grp in(select grp from grpd group by 1 having count(1) >= 3)
+order by a.visit_date;

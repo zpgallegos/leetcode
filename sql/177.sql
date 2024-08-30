@@ -1,13 +1,19 @@
 -- https://leetcode.com/problems/nth-highest-salary/
 
-create function getNthHighestSalary(@N int) returns int as
+
+create function getNthHighestSalary(N int) returns int
 begin
-return (
-    select max(salary)
-    from (
-        select *, dense_rank() over(order by salary desc) as rnk
-        from employee
-        ) sub
-    where rnk = @N
-);
-end;
+    return (
+        with cte as (
+            select
+                a.salary,
+                dense_rank() over win as rnk
+            from employee a
+            window win as (order by a.salary desc)
+        )
+
+        select max(salary)
+        from cte
+        where rnk = N
+    );
+end

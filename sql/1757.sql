@@ -1,5 +1,8 @@
--- https://leetcode.com/problems/recyclable-and-low-fat-products/
+-- https://leetcode.com/problems/recyclable-and-low-fat-products/description/
 
 select product_id
-from Products
-where low_fats = 'Y' and recyclable = 'Y';
+from products
+where
+    1=1
+    and low_fats = 'Y'
+    and recyclable = 'Y';

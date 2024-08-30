@@ -1,5 +1,6 @@
+-- https://leetcode.com/problems/employees-earning-more-than-their-managers/description/
 
-
-select a.name as "Employee"
-from Employee a inner join Employee b on a.managerId = b.id
+select a.name as Employee
+from employee a
+    inner join employee b on a.managerid = b.id
 where a.salary > b.salary;
