@@ -2,18 +2,14 @@
 
 
 create function getNthHighestSalary(N int) returns int
-begin
-    return (
-        with cte as (
-            select
-                a.salary,
-                dense_rank() over win as rnk
-            from employee a
-            window win as (order by a.salary desc)
-        )
+begin return (
+    with cte as (
+        select
+            a.salary,
+            dense_rank() over(order by a.salary desc) as rnk
+        from employee a
+    )
 
-        select max(salary)
-        from cte
-        where rnk = N
-    );
+    select max(salary) from cte where rnk = N
+);
 end

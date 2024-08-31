@@ -3,22 +3,23 @@
 with cte as (
     select
         a.*,
-        case
-        when datediff(a.transaction_date, lag(a.transaction_date, 1) over win) > 1 then 1
-        else 0
-        end as not_consecutive,
-        case
-        when a.amount <= lag(a.amount, 1) over win then 1 else 0
-        end as not_increasing
+        if(
+            a.amount <= lag(a.amount, 1) over win or
+            date_sub(a.transaction_date, interval 1 day) != lag(a.transaction_date, 1) over win,
+            1, 0
+        ) as incr
     from transactions a
     window win as (partition by a.customer_id order by a.transaction_date)
 ),
 grpd as (
     select
         a.*,
-        sum(a.not_consecutive + a.not_increasing) over win as grp
+        sum(a.incr) over win as grp
     from cte a
-    window win as (partition by a.customer_id order by a.transaction_date)
+    window win as (
+        partition by a.customer_id order by a.transaction_date
+        rows between unbounded preceding and current row
+    )
 )
 
 select
@@ -27,4 +28,5 @@ select
     max(a.transaction_date) as consecutive_end
 from grpd a
 group by a.customer_id, a.grp
-having count(1) >= 3;
+having count(1) >= 3
+order by 1;

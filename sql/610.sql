@@ -1,11 +1,7 @@
--- https://leetcode.com/problems/triangle-judgement/
+-- https://leetcode.com/problems/triangle-judgement/description/
+
 
 select
-    *,
-    if(
-        x + y > z and
-        x + z > y and
-        y + z > x,
-    'Yes', 'No') as triangle
-        
-from triangle
+    a.*,
+    if(a.x + a.y <= a.z or a.x + a.z <= a.y or a.y + a.z <= a.x, 'No', 'Yes') as triangle
+from triangle a;

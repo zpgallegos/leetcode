@@ -1,6 +1,9 @@
+-- https://leetcode.com/problems/user-activity-for-the-past-30-days-i/description/
 
 
-select activity_date as day, count(distinct user_id) as active_users
-from Activity
-where activity_date between date_sub('2019-07-27', interval 29 day) and cast('2019-07-27' as date)
-group by activity_date
+select
+    a.activity_date as day,
+    count(distinct a.user_id) as active_users
+from activity a
+where a.activity_date between date_sub('2019-07-27', interval 29 day) and '2019-07-27'
+group by 1;

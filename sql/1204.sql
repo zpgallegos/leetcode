@@ -1,27 +1,13 @@
--- https://leetcode.com/problems/last-person-to-fit-in-the-bus/
-WITH cum AS (
-    SELECT
-        turn,
-        sum(weight) over(
-            ORDER BY
-                turn
-        ) AS cum_weight
+-- https://leetcode.com/problems/last-person-to-fit-in-the-bus/description/
 
-    FROM
-        Queue
+with cte as (
+    select
+        a.*,
+        sum(a.weight) over win as running
+    from queue a
+    window win as (order by a.turn rows between unbounded preceding and current row)
 )
 
-
-SELECT
-    person_name
-FROM
-    Queue
-WHERE
-    turn = (
-        SELECT
-            max(turn)
-        FROM
-            cum
-        WHERE
-            cum_weight <= 1000
-    )
+select person_name 
+from cte 
+where turn = (select max(turn) from cte where running <= 1000);

@@ -1,4 +1,4 @@
--- https://leetcode.com/problems/confirmation-rate/
+-- https://leetcode.com/problems/confirmation-rate/description/
 
 with rates as (
     select
@@ -12,6 +12,6 @@ select * from rates
 
 union
 
-select a.user_id, 0 as confirmation_rate
-from signups a
-where a.user_id not in(select user_id from rates);
+select user_id, 0 as confirmation_rate
+from signups
+where user_id not in (select user_id from rates);
