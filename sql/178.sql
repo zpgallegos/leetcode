@@ -1,12 +1,7 @@
--- https://leetcode.com/problems/rank-scores/
+-- https://leetcode.com/problems/rank-scores/description/
 
-with cte as (
-    select
-        score,
-        dense_rank() over(order by score desc) as "rank"
-    from scores
-)
-
-select *
-from cte
-order by cte.rank;
+select
+    a.score,
+    dense_rank() over(order by a.score desc) as `rank`
+from scores a
+order by 2;

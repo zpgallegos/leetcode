@@ -1,6 +1,10 @@
--- https://leetcode.com/problems/not-boring-movies/
+-- https://leetcode.com/problems/not-boring-movies/description/
 
-select *
-from Cinema
-where mod(id, 2) = 1 and description <> 'boring'
-order by rating desc;
+
+select a.*
+from cinema a
+where
+    1=1
+    and a.id % 2 = 1
+    and a.description != 'boring'
+order by a.rating desc;

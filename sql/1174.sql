@@ -1,18 +1,15 @@
--- https://leetcode.com/problems/immediate-food-delivery-ii/
-SELECT
-    round(
-        avg(a.order_date = a.customer_pref_delivery_date) * 100,
-        2
-    ) AS immediate_percentage
-FROM
-    delivery a
-    INNER JOIN (
-        SELECT
-            customer_id,
-            min(order_date) AS first_order_date
-        FROM
-            Delivery
-        GROUP BY
-            customer_id
-    ) s ON a.customer_id = s.customer_id
-    AND a.order_date = s.first_order_date
+-- https://leetcode.com/problems/immediate-food-delivery-ii/description/
+
+
+with cte as (
+    select
+        a.*,
+        if(a.order_date = a.customer_pref_delivery_date, 1, 0) as is_immediate,
+        row_number() over win as rn
+    from delivery a
+    window win as (partition by a.customer_id order by a.order_date)
+)
+
+select round(avg(is_immediate) * 100, 2) as immediate_percentage
+from cte
+where rn = 1;

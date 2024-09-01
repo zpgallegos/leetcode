@@ -1,10 +1,6 @@
--- https://leetcode.com/problems/find-users-with-valid-e-mails/
+-- https://leetcode.com/problems/find-users-with-valid-e-mails/description/
 
-select
-    a.user_id,
-    a.name,
-    a.mail
 
-from users a
-
-where a.mail regexp "^[a-zA-Z][a-zA-Z0-9_.-]*@leetcode\\.com";
+select *
+from users
+where mail regexp "^[A-Za-z][A-Za-z0-9_.-]*@leetcode\\.com$";
