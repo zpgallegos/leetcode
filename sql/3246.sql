@@ -1,21 +1,15 @@
--- https://leetcode.com/problems/finding-the-topic-of-each-post/description/
+-- https://leetcode.com/problems/premier-league-table-ranking/description/
 
 
-with cte as (
+select
+    s.*,
+    rank() over win as position
+from (
     select
         a.team_id,
         a.team_name,
-        sum(a.wins * 3) + sum(a.draws) as points
+        a.wins * 3 + a.draws as points
     from teamstats a
-    group by 1, 2
-),
-ranked as (
-    select
-        a.*,
-        rank() over(order by a.points desc) as position
-    from cte a
-)
-
-select a.*
-from ranked a
-order by a.position, a.team_name;
+) s
+window win as (order by s.points desc)
+order by 3 desc, 2;

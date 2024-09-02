@@ -8,6 +8,6 @@ from employeeshifts a
 where
     1=1
     and a.start_time < b.start_time
-    and a.end_time > b.start_time
+    and b.start_time < a.end_time
 group by 1
-order by 1
+order by 1;
