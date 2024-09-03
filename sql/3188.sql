@@ -1,3 +1,57 @@
+-- https://leetcode.com/problems/find-top-scoring-students-ii/
+
+
+with mand_cnts as (
+    select a.major, count(1) as mand_cnt
+    from courses a
+    where a.mandatory = 'yes'
+    group by 1
+),
+cte as (
+    select
+        a.student_id,
+        a.course_id,
+        b.major,
+        a.gpa,
+        if(c.major = b.major, true, false) as in_major,
+        if(b.mandatory = 'yes', 1, 0) as is_mandatory,
+        if(a.grade = 'A', 1, 0) as is_a,
+        if(a.grade in('A', 'B'), 1, 0) as is_ab
+    from enrollments a
+        inner join courses b on a.course_id = b.course_id
+        inner join students c on a.student_id = c.student_id
+),
+qual as (
+    select s.student_id
+    from (
+        select
+            a.student_id,
+            a.major,
+            sum(a.is_mandatory) as mand_taken,
+            sum(1 - a.is_mandatory) as elec_taken,
+            avg(case when a.is_mandatory then a.is_a else null end) as mand_gpa_req,
+            avg(case when a.is_mandatory then null else a.is_ab end) as elec_gpa_req
+        from cte a
+        where a.in_major
+        group by 1, 2
+    ) s
+        inner join mand_cnts b on s.major = b.major and s.mand_taken = b.mand_cnt
+    where
+        1=1
+        and s.elec_taken >= 2
+        and s.mand_gpa_req = 1
+        and s.elec_gpa_req = 1
+)
+
+select a.student_id
+from cte a
+where a.student_id in(select * from qual)
+group by 1
+having avg(a.gpa) >= 2.5
+order by 1;
+
+
+
 -- https://leetcode.com/problems/find-top-scoring-students-ii/description/
 
 

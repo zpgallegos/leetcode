@@ -2,34 +2,38 @@
 
 
 with cte as (
-    select *,
-        time_to_sec(timediff(exit_time, entry_time)) / 3600 as hrs
-    from parkingtransactions
-), lot_agg as (
     select
-        sub.*,
-        row_number() over(partition by sub.car_id order by sub.total_hrs desc) as rn
+        s.*,
+        row_number() over(partition by s.car_id order by s.lot_hours desc) as rn
     from (
         select
-            car_id,
-            lot_id,
-            sum(hrs) as total_hrs
-        from cte
-        group by
-            car_id,
-            lot_id
-    ) sub
-), car_agg as (
+            a.car_id,
+            a.lot_id,
+            sum(a.fee_paid) as lot_fee_paid,
+            sum(timestampdiff(second, a.entry_time, a.exit_time)) / (60 * 60) as lot_hours
+        from parkingtransactions a
+        group by 1, 2
+    ) s
+),
+aggd as (
     select
-        car_id,
-        sum(fee_paid) as total_fee_paid,
-        round(sum(fee_paid) / sum(hrs), 2) as avg_hourly_fee
-    from cte
-    group by car_id
+        a.car_id,
+        sum(a.lot_fee_paid) as total_fee_paid,
+        round(sum(a.lot_fee_paid) / sum(a.lot_hours), 2) as avg_hourly_fee
+    from cte a
+    group by 1
+),
+top_lots as (
+    select 
+        a.car_id, 
+        a.lot_id as most_time_lot
+    from cte a
+    where rn = 1
 )
 
-select a.*, b.lot_id as most_time_lot
-from car_agg a
-    inner join lot_agg b on a.car_id = b.car_id
-where b.rn = 1
-order by a.car_id;
+select
+    a.*,
+    b.most_time_lot
+from aggd a
+    inner join top_lots b on a.car_id = b.car_id
+order by 1;

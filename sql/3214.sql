@@ -1,3 +1,26 @@
+-- https://leetcode.com/problems/year-on-year-growth-rate/
+
+
+with cte as (
+    select
+        year(a.transaction_date) as year,
+        a.product_id,
+        sum(a.spend) as curr_year_spend
+    from user_transactions a
+    group by 1, 2
+)
+
+select
+    a.year,
+    a.product_id,
+    a.curr_year_spend,
+    b.curr_year_spend as prev_year_spend,
+    round(((a.curr_year_spend - b.curr_year_spend) / b.curr_year_spend) * 100, 2) as yoy_rate
+from cte a
+    left join cte b on a.product_id = b.product_id and a.year - 1 = b.year
+order by 2, 1;
+
+
 -- https://leetcode.com/problems/year-on-year-growth-rate/description/
 
 with cte as (
