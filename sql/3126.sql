@@ -1,5 +1,20 @@
 -- https://leetcode.com/problems/server-utilization-time/description/
 
+with cte as (
+    select
+        a.*,
+        lag(a.status_time, 1) over win as last_time
+    from servers a
+    window win as (partition by a.server_id order by a.status_time)
+)
+
+select floor(sum(extract(epoch from (a.status_time - a.last_time))) / (60 * 60 * 24)) as total_uptime_days
+from cte a
+where a.session_status = 'stop';
+
+
+-- https://leetcode.com/problems/server-utilization-time/description/
+
 
 with cte as (
     select

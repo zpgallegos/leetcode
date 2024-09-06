@@ -1,9 +1,17 @@
 -- https://leetcode.com/problems/invalid-tweets-ii/
 
+with cte as (
+    select 
+        a.tweet_id,
+        concat(' ', a.content) as content,
+        length(a.content) as n 
+    from tweets a
+)
+
 select tweet_id
-from tweets
+from cte
 where
-    length(content) > 140 or
-    length(replace(content, '@', '')) < length(content) - 3 or
-    length(replace(content, '#', '')) < length(content) - 3
-order by tweet_id;
+    n > 140
+    or n - length(replace(content, ' @', '')) >= 6
+    or n - length(replace(content, ' #', '')) >= 6
+order by 1;

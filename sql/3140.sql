@@ -1,3 +1,40 @@
+-- https://leetcode.com/problems/consecutive-available-seats-ii/description/
+
+with cte as (
+    select
+        a.*,
+        lag(a.free, 1) over(order by a.seat_id) as last_free
+    from cinema a
+),
+grpd as (
+    select
+        s.*,
+        sum(s.incr) over win as grp
+    from (
+        select
+            a.*,
+            if(not(a.free = 1 and a.last_free = 1), 1, 0) as incr
+        from cte a
+    ) s
+    window win as (order by s.seat_id rows between unbounded preceding and current row)
+),
+aggd as (
+    select
+        a.grp,
+        min(a.seat_id) as first_seat_id,
+        max(a.seat_id) as last_seat_id,
+        count(1) as consecutive_seats_len
+    from grpd a
+    where a.free = 1
+    group by 1
+)
+
+select first_seat_id, last_seat_id, consecutive_seats_len
+from aggd
+where consecutive_seats_len = (select max(consecutive_seats_len) from aggd)
+order by 1;
+
+
 -- https://leetcode.com/problems/consecutive-available-seats-ii/
 
 

@@ -1,24 +1,24 @@
--- https://leetcode.com/problems/find-longest-calls/
+-- https://leetcode.com/problems/find-longest-calls/description/
 
 
 with cte as (
     select
         a.*,
-        b.first_name,
-        row_number() over(partition by a.type order by a.duration desc) as rn
+        a.duration / 3600 as hrs,
+        (a.duration % 3600) / 60 as mins,
+        (a.duration % 60) as secs,
+        row_number() over win as rn
     from calls a
-        inner join contacts b on a.contact_id = b.id
+    window win as (partition by a.type order by a.duration desc)
 )
 
 select
-    first_name,
-    type,
-    lpad((duration / 3600)::text, 2, '0') || ':' ||
-    lpad(((duration % 3600) / 60)::text, 2, '0') || ':' ||
-    lpad((duration % 60)::int::text, 2, '0') as duration_formatted
-from cte
+    b.first_name,
+    a.type,
+    lpad(a.hrs::text, 2, '0') || ':' || 
+        lpad(a.mins::text, 2, '0') || ':' || 
+        lpad(a.secs::text, 2, '0') as duration_formatted
+from cte a
+    inner join contacts b on a.contact_id = b.id
 where rn <= 3
-order by 
-    type, 
-    duration desc,
-    first_name desc;
+order by 2 desc, 3 desc, 1 desc;
