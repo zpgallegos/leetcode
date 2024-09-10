@@ -1,9 +1,9 @@
 -- https://leetcode.com/problems/class-performance/description/
 
 with cte as (
-    select a.assignment1 + a.assignment2 + a.assignment3 as score
-    from scores a
+    select assignment1 + assignment2 + assignment3 as total
+    from scores 
 )
 
-select max(score) - min(score) as difference_in_score
+select max(total) - min(total) as difference_in_score
 from cte;

@@ -1,17 +1,19 @@
--- https://leetcode.com/problems/find-trending-hashtags/
+-- https://leetcode.com/problems/find-trending-hashtags/description/
 
-with cte as (
-    select *, substring(tweet from '#\w+') as hashtag
+
+with matches as (
+    select 
+        regexp_matches(tweet, '#\w+') as hashtag,
+        count(1) as hashtag_count
     from tweets
-), cte1 as (
-    select hashtag, count(*) as hashtag_count
-    from cte
-    group by hashtag
-), cte2 as (
-    select *, row_number() over(order by hashtag_count desc, hashtag desc) as rn
-    from cte1
+    group by 1
+),
+cte as (
+    select a.*, row_number() over win as rn
+    from matches a
+    window win as (order by a.hashtag_count desc, a.hashtag desc)
 )
 
 select hashtag, hashtag_count
-from cte2
+from cte
 where rn <= 3;

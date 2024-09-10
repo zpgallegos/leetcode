@@ -2,17 +2,22 @@
 
 with cte as (
     select
-        *,
-        rank() over(order by cnt desc) as rnk
+        s.*,
+        rank() over win as rnk
     from (
-        select dep_id, count(1) as cnt
+        select
+            dep_id,
+            count(1) as n_emps
         from employees
-        group by dep_id
-    ) sub
+        group by 1
+    ) s
+    window win as (order by s.n_emps desc)
 )
 
-select b.emp_name as manager_name, a.dep_id
+select
+    b.emp_name as manager_name,
+    a.dep_id
 from cte a
     inner join employees b on a.dep_id = b.dep_id
 where a.rnk = 1 and b.position = 'Manager'
-order by a.dep_id;
+order by 2;

@@ -1,6 +1,22 @@
 -- https://leetcode.com/problems/user-activities-within-time-bounds/description/
 
--- LOL this problem sucks
+
+with cte as (
+    select
+        a.*,
+        lag(a.session_end) over win as last_session_end
+    from sessions a
+    window win as (partition by a.user_id, a.session_type order by a.session_start)
+)
+
+select distinct user_id
+from cte
+where
+    1=1
+    and last_session_end is not null 
+    and extract(epoch from (session_start - last_session_end)) / (60 * 60) <= 12;
+
+-- or...
 
 select distinct a.user_id 
 from sessions a cross join sessions b

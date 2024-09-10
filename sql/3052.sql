@@ -1,34 +1,37 @@
--- https://leetcode.com/problems/maximize-items/description/
+-- https://leetcode.com/problems/maximize-items/
 
-with cte as (
-    select 
-        item_type, 
-        count(1) as item_n,
-        sum(square_footage) as space
-    from inventory
-    group by item_type
-), types as (
-    select 'prime_eligible' as item_type, 0 as item_n, 0 as space union
-    select 'not_prime' as item_type, 0 as item_n, 0 as space
-), sizes as (
-    select * from cte union
-    select * from types where item_type not in(select item_type from cte)
-), prime as (
+
+with types as (
     select
-        item_type,
-        floor(500000 / space) * item_n as item_count,
-        floor(500000 / space) * space as used_space
-    from sizes
-    where item_type = 'prime_eligible'
-), not_prime as (
+        a.item_type,
+        count(1) as n_items,
+        sum(a.square_footage) as total_footage
+    from inventory a
+    group by 1
+),
+prime1 as (
     select 
-        item_type, 
-        floor((500000 - (select max(used_space) from prime)) / space) * item_n as item_count
-    from sizes
-    where item_type = 'not_prime'
+        a.*,
+        floor(500000 / a.total_footage) as n_combs
+    from types a
+    where a.item_type = 'prime_eligible'
+),
+prime as (
+    select
+        a.item_type,
+        a.n_combs * a.total_footage as total_footage,
+        a.n_combs * a.n_items as item_count
+    from prime1 a
+),
+not_prime as (
+    select 
+        a.item_type,
+        floor((500000 - (select total_footage from prime)) / a.total_footage) * a.n_items
+    from types a
+    where a.item_type = 'not_prime'
 )
 
 select * from (
     select item_type, item_count from prime union
-    select item_type, item_count from not_prime
-) sub order by item_count desc;
+    select * from not_prime
+) s order by 2 desc;

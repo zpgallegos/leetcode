@@ -1,61 +1,49 @@
--- https://leetcode.com/problems/top-three-wineries/
+-- https://leetcode.com/problems/top-three-wineries/description/
 
-declare @max_rank int = 3;
 
-with rank_range as ( 
-    -- recursive
-    select 1 as rnk
-    union all
-    select rnk + 1 from rank_range where rnk < @max_rank
-), idx as (
-    select sub.country, rank_range.rnk
+with recursive rng as (
+    select 1 as idx union
+    select idx + 1 from rng where idx < 3
+),
+combs as (
+    select distinct a.country, b.idx
+    from wineries a cross join rng b
+),
+tabd as (
+    select
+        s.*,
+        row_number() over win as rnk
     from (
-        select distinct country
-        from wineries
-    ) sub cross join rank_range
-), grpd as (
-    select 
-        *,
-        row_number() over(partition by country order by winery_total_points desc, winery) as rnk
-    from (
-        select country, winery, sum(points) as winery_total_points
-        from wineries
-        group by country, winery
-    ) sub
-), filled as (
-    select * from grpd union
+        select
+            a.country,
+            a.winery,
+            sum(a.points) as winery_total_points
+        from wineries a
+        group by 1, 2
+    ) s
+    window win as (partition by s.country order by s.winery_total_points desc, s.winery)
+),
+cte as (
     select
         a.country,
+        a.idx,
         case
-        when a.rnk = 2 then 'No second winery'
-        when a.rnk = 3 then 'No third winery'
-        end as winery,
-        null as winery_total_points,
-        a.rnk
-    from idx a
-        left join grpd b on a.country = b.country and a.rnk = b.rnk
-    where b.country is null
-), labeled as (
-    select
-        *,
-        case
-        when rnk = 1 then 'top_winery'
-        when rnk = 2 then 'second_winery'
-        when rnk = 3 then 'third_winery'
-        end as rnk_label,
-        case
-        when winery_total_points is null then winery
-        else concat(winery, ' (', winery_total_points, ')')
+        when b.rnk is not null then concat(b.winery, ' (', b.winery_total_points, ')')
+        else
+            case
+            when a.idx = 2 then 'No second winery'
+            else 'No third winery'
+            end
         end as label
-    from filled
+    from combs a
+        left join tabd b on a.country = b.country and a.idx = b.rnk
 )
 
-select * from (
-    select 
-        country,
-        max(case when rnk_label = 'top_winery' then label else null end) as top_winery,
-        max(case when rnk_label = 'second_winery' then label else null end) as second_winery,
-        max(case when rnk_label = 'third_winery' then label else null end) as third_winery
-    from labeled
-    group by country
-) sub order by country;
+select
+    a.country,
+    max(case when a.idx = 1 then a.label end) as top_winery,
+    max(case when a.idx = 2 then a.label end) as second_winery,
+    max(case when a.idx = 3 then a.label end) as third_winery
+from cte a
+group by 1
+order by 1;

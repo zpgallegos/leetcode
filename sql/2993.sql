@@ -1,17 +1,11 @@
 -- https://leetcode.com/problems/friday-purchases-i/description/
 
-select * from (
-    select
-        week_of_month,
-        purchase_date,
-        sum(amount_spend) as total_amount
-    from (
-        select
-            *,
-            datepart(weekday, purchase_date) as wkday,
-            ceiling(datepart(day, purchase_date) / 7.0) as week_of_month
-        from purchases
-        ) sub
-    where wkday = 6
-    group by week_of_month, purchase_date
-) sub order by week_of_month;
+select
+    to_char(a.purchase_date, 'W')::int as week_of_month,
+    a.purchase_date,
+    sum(a.amount_spend) as total_amount
+from purchases a
+where extract(dow from a.purchase_date) = 5
+group by 1, 2
+order by 1;
+

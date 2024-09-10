@@ -3,18 +3,23 @@
 
 with cte as (
     select
-        a.*,
-        b.name,
-        avg(a.workload) over(partition by b.team) as team_avg
-    from project a
-        inner join employees b on a.employee_id = b.employee_id
+        b.*,
+        a.name,
+        a.team
+    from employees a
+        inner join project b on a.employee_id = b.employee_id
 )
 
 select
-    employee_id,
-    project_id,
-    name as employee_name,
-    workload as project_workload
-from cte
-where workload > team_avg
-order by employee_id, project_id;
+    a.employee_id,
+    a.project_id,
+    a.name as employee_name,
+    a.workload as project_workload
+from cte a
+    inner join (
+        select a.team, avg(a.workload) as team_avg_workload
+        from cte a
+        group by 1
+    ) s on a.team = s.team
+where a.workload > s.team_avg_workload
+order by 1, 2;

@@ -1,12 +1,7 @@
--- https://leetcode.com/problems/find-expensive-cities/
+-- https://leetcode.com/problems/find-expensive-cities/description/
 
-with grpd as (
-    select city, avg(price) as price
-    from listings
-    group by city
-)
-
-select city
-from grpd
-where price > (select avg(price) from listings)
-order by city;
+select a.city
+from listings a
+group by 1
+having avg(a.price) > (select avg(price) from listings)
+order by 1;

@@ -1,31 +1,27 @@
 -- https://leetcode.com/problems/snaps-analysis/description/
 
-with tm as (
+
+with cte as (
     select
         b.age_bucket,
         a.activity_type,
-        sum(a.time_spent) as activity_time
-
+        sum(a.time_spent) as activity_total
     from activities a
         inner join age b on a.user_id = b.user_id
-
-    group by b.age_bucket, a.activity_type
-), cte as (
+    group by 1, 2
+),
+piv as (
     select
         a.age_bucket,
-        a.activity_type,
-        round(100 * (a.activity_time / b.total_time), 2) as time_prop
-    from tm a
-        inner join (
-            select age_bucket, sum(activity_time) as total_time
-            from tm
-            group by age_bucket
-        ) b on a.age_bucket = b.age_bucket
+        coalesce(max(case when a.activity_type = 'send' then a.activity_total end), 0) as send_time,
+        coalesce(max(case when a.activity_type = 'open' then a.activity_total end), 0) as open_time,
+        sum(activity_total) as total_time
+    from cte a
+    group by 1
 )
 
 select
     age_bucket,
-    sum(case when activity_type = 'send' then time_prop else 0 end) as send_perc,
-    sum(case when activity_type = 'open' then time_prop else 0 end) as open_perc
-from cte
-group by age_bucket;
+    round((send_time / total_time) * 100, 2) as send_perc,
+    round((open_time / total_time) * 100, 2) as open_perc
+from piv;

@@ -1,5 +1,16 @@
 -- https://leetcode.com/problems/find-all-unique-email-domains/description/
 
+select
+    substring(a.email from '(?<=@)[\w-]+.com') as email_domain,
+    count(1) as count
+from emails a
+where a.email ilike '%.com'
+group by 1
+order by 1;
+
+
+-- https://leetcode.com/problems/find-all-unique-email-domains/description/
+
 with cte as (
     select *,
         right(lower(email), 4) as ending,
