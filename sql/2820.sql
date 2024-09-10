@@ -2,19 +2,20 @@
 
 with cte as (
     select
-        voter,
-        candidate,
-        1 / count(1) over(partition by voter) as vote_weight
-    from votes
-    where candidate is not null
+        a.candidate,
+        1 / count(1) over win as votes
+    from votes a
+    window win as (partition by a.voter)
 ),
-cand as (
-    select candidate, sum(vote_weight) as vote_weight
-    from cte
-    group by candidate
+tabd as (
+    select
+        a.candidate,
+        sum(votes) as total_votes
+    from cte a
+    group by 1
 )
 
 select candidate
-from cand
-where vote_weight = (select max(vote_weight) from cand)
-order by candidate;
+from tabd
+where total_votes = (select max(total_votes) from tabd)
+order by 1;

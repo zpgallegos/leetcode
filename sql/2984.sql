@@ -1,3 +1,30 @@
+-- https://leetcode.com/problems/find-peak-calling-hours-for-each-city/description/
+
+with cte as (
+    select
+        city,
+        hour(call_time) as hr,
+        count(1) as number_of_calls
+    from calls
+    group by 1, 2
+),
+mx as (
+    select
+        city,
+        max(number_of_calls) as max_calls
+    from cte
+    group by 1
+)
+
+select
+    a.city,
+    a.hr as peak_calling_hour,
+    a.number_of_calls
+from cte a
+    inner join mx b on a.city = b.city and a.number_of_calls = b.max_calls
+order by 2 desc, 1 desc;
+
+
 -- https://leetcode.com/problems/find-peak-calling-hours-for-each-city/
 
 with cte as (
