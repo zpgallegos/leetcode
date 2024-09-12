@@ -1,16 +1,13 @@
--- https://leetcode.com/problems/popularity-percentage/
+-- https://leetcode.com/problems/popularity-percentage/description/
 
 with cte as (
-    select * from friends union
-    select user2 as user1, user1 as user2 from friends
-), cnts as (
-    select user1, count(distinct user2) as frnds
-    from cte
-    group by user1
+    select user1, user2 as friend from friends union
+    select user2 as user1, user1 as friend from friends
 )
 
 select
-    user1,
-    round((frnds / (select count(distinct user1) from cnts)) * 100, 2) as percentage_popularity
-from cnts
-order by user1;
+    a.user1,
+    round((count(1)::numeric / (select count(distinct user1)::numeric from cte)) * 100, 2) as percentage_popularity
+from cte a
+group by 1
+order by 1;
