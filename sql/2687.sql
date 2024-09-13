@@ -1,7 +1,8 @@
--- https://leetcode.com/problems/bikes-last-time-used/description/
+-- https://leetcode.com/problems/bikes-last-time-used/
 
-select * from (
-    select bike_number, max(end_time) as end_time
-    from bikes
-    group by bike_number
-) sub order by end_time desc;
+select
+    a.bike_number,
+    max(a.end_time) as end_time
+from bikes a
+group by 1
+order by 2 desc;
