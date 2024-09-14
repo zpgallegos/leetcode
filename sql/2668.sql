@@ -1,9 +1,14 @@
--- https://leetcode.com/problems/find-latest-salaries/
+-- https://leetcode.com/problems/find-latest-salaries/description/
 
 with cte as (
-    select emp_id, firstname, lastname, max(salary) as salary, department_id
-    from salary
-    group by emp_id, firstname, lastname, department_id
+    select
+        a.*,
+        rank() over win as rnk
+    from salary a
+    window win as (partition by a.emp_id order by a.salary desc)
 )
 
-select * from cte order by emp_id;
+select emp_id, firstname, lastname, salary, department_id
+from cte
+where rnk = 1
+order by 1;
