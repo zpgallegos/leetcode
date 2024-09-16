@@ -1,4 +1,5 @@
--- https://leetcode.com/problems/form-a-chemical-bond/
+-- https://leetcode.com/problems/form-a-chemical-bond/description/
+
 
 select a.symbol as metal, b.symbol as nonmetal
 from elements a cross join elements b

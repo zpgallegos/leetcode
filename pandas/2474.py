@@ -4,19 +4,20 @@ import pandas as pd
 
 
 def find_specific_customers(orders: pd.DataFrame) -> pd.DataFrame:
-    """better, recognize that zero years exclude them from the output"""
     orders["year"] = orders.order_date.dt.year
 
-    agg = orders.groupby(["customer_id", "year"]).price.sum().sort_index().reset_index()
+    tbl = orders.groupby(["customer_id", "year"]).price.sum().sort_index()
+    custs = set(tbl.index.levels[0])
+    tbl = tbl.reset_index()
 
-    grp = agg.groupby("customer_id")
-    agg["year_diff"] = grp.year.diff(1)
-    agg["price_diff"] = grp.price.diff(1)
+    grp = tbl.groupby("customer_id")
+    tbl["year_diff"] = grp.year.diff(1)
+    tbl["price_diff"] = grp.price.diff(1)
 
-    rem = set(agg[(agg.year_diff > 1) | (agg.price_diff <= 0)].customer_id)
-    out = set(agg.customer_id) - rem
+    # they cannot have strictly increasing purchases with a zero year
+    disqual = set(tbl.loc[(tbl.year_diff > 1) | (tbl.price_diff <= 0), "customer_id"])
 
-    return pd.DataFrame({"customer_id": list(out)})
+    return pd.DataFrame({"customer_id": list(custs - disqual)})
 
 
 def find_specific_customers(orders: pd.DataFrame) -> pd.DataFrame:
