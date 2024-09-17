@@ -1,3 +1,25 @@
+# https://leetcode.com/problems/employees-with-deductions/
+
+import pandas as pd
+
+from numpy import ceil
+
+
+def employees_with_deductions(
+    employees: pd.DataFrame, logs: pd.DataFrame
+) -> pd.DataFrame:
+    employees = employees.set_index("employee_id")
+
+    logs["mins"] = ceil((logs.out_time - logs.in_time).dt.total_seconds() / 60)
+
+    employees["hrs"] = (logs.groupby("employee_id").mins.sum() / 60).reindex(
+        employees.index, fill_value=0
+    )
+
+    return pd.DataFrame(employees.loc[employees.hrs < employees.needed_hours].index)
+
+
+
 # https://leetcode.com/problems/employees-with-deductions/description/
 
 import numpy as np
