@@ -2,24 +2,26 @@
 
 with cte as (
     select
-        sub.invoice_id,
-        row_number() over win as rn
-    from (
-        select
-            a.invoice_id,
-            sum(a.quantity * b.price) as invoice_total
-        from purchases a
-            inner join products b on a.product_id = b.product_id
-        group by 1
-    ) sub
-    window win as (order by sub.invoice_total desc, sub.invoice_id)
+        a.invoice_id,
+        b.product_id,
+        a.quantity,
+        a.quantity * b.price as price
+    from purchases a
+        inner join products b on a.product_id = b.product_id
+),
+tab as (
+    select invoice_id, sum(price) as price
+    from cte
+    group by 1
+),
+rnkd as (
+    select
+        invoice_id,
+        rank() over win as rnk
+    from tab
+    window win as (order by price desc, invoice_id)
 )
 
-select
-    a.product_id,
-    a.quantity,
-    sum(a.quantity * b.price) as price
-from purchases a
-    inner join products b on a.product_id = b.product_id
-where a.invoice_id = (select invoice_id from cte where rn = 1)
-group by 1, 2;
+select product_id, quantity, price
+from cte
+where invoice_id = (select invoice_id from rnkd where rnk = 1);

@@ -1,4 +1,24 @@
+# https://leetcode.com/problems/change-null-values-in-a-table-to-the-previous-value/description/
+
+import pandas as pd
+
+
+def change_null_values(coffee_shop: pd.DataFrame) -> pd.DataFrame:
+    for i, row in enumerate(coffee_shop.itertuples()):
+        if not i:
+            curr = row.drink
+            continue
+
+        if pd.isnull(row.drink):
+            coffee_shop.loc[row.Index, "drink"] = curr
+        else:
+            curr = row.drink
+
+    return coffee_shop
+
+
 # https://leetcode.com/problems/change-null-values-in-a-table-to-the-previous-value/
+
 
 import pandas as pd
 

@@ -1,31 +1,17 @@
 -- https://leetcode.com/problems/calculate-the-influence-of-each-salesperson/
-WITH cte AS (
-    SELECT
+
+with totals as (
+    select
         b.salesperson_id,
-        c.name,
-        sum(a.price) AS total
-    FROM
-        sales a
-        INNER JOIN customer b ON a.customer_id = b.customer_id
-        INNER JOIN salesperson c ON b.salesperson_id = c.salesperson_id
-    GROUP BY
-        b.salesperson_id,
-        c.name
+        sum(a.price) as total
+    from sales a
+        inner join customer b on a.customer_id = b.customer_id
+    group by 1
 )
-SELECT
-    *
-FROM
-    cte
-UNION
-SELECT
-    *,
-    0 AS total
-FROM
-    salesperson
-WHERE
-    salesperson_id NOT IN(
-        SELECT
-            salesperson_id
-        FROM
-            cte
-    );
+
+select
+    a.salesperson_id,
+    a.name,
+    coalesce(b.total, 0) as total
+from salesperson a
+    left join totals b on a.salesperson_id = b.salesperson_id;
