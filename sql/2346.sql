@@ -1,33 +1,22 @@
--- https://leetcode.com/problems/compute-the-rank-as-a-percentage/
-WITH ranked AS (
-    SELECT
-        *,
-        rank() over(
-            PARTITION by department_id
-            ORDER BY
-                mark DESC
-        ) AS rnk
-    FROM
-        students
+-- https://leetcode.com/problems/compute-the-rank-as-a-percentage/description/
+
+with cte as (
+    select
+        a.*,
+        rank() over (partition by a.department_id order by a.mark desc) as rnk,
+        count(1) over(partition by a.department_id) as dep_n
+    from students a
+),
+cst as (
+    select
+        a.*,
+        (rnk - 1) * 100.0 as num,
+        case when dep_n - 1 = 0 then 1.0 else (dep_n - 1.0) end as den
+    from cte a
 )
-SELECT
-    a.student_id,
-    a.department_id,
-    round(
-        CASE
-            WHEN s.n > 1 THEN ((a.rnk - 1) * 100) / (s.n - 1)
-            ELSE 0
-        END,
-        2
-    ) AS percentage
-FROM
-    ranked a
-    INNER JOIN (
-        SELECT
-            department_id,
-            count(1) AS n
-        FROM
-            Students
-        GROUP BY
-            department_id
-    ) s ON a.department_id = s.department_id
+
+select
+    student_id,
+    department_id,
+    round(num / den, 2) as percentage
+from cst;
