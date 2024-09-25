@@ -17,3 +17,18 @@ def arrange_table(genders: pd.DataFrame) -> pd.DataFrame:
         dfs.append(df)
 
     return pd.concat(dfs, axis=0).sort_values("idx").drop("idx", axis=1)
+
+
+# https://leetcode.com/problems/arrange-table-by-gender/
+
+import pandas as pd
+
+
+def arrange_table(genders: pd.DataFrame) -> pd.DataFrame:
+    genders = genders.sort_values(["gender", "user_id"])
+
+    genders["idx"] = genders.groupby("gender").cumcount() + genders.gender.apply(
+        lambda x: 0.01 if x == "other" else 0.1 if x == "male" else 0
+    )
+
+    return genders.sort_values("idx").drop("idx", axis=1)
