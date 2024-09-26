@@ -1,40 +1,25 @@
--- https://leetcode.com/problems/dynamic-pivoting-of-a-table/
-delimiter // CREATE PROCEDURE PivotProducts() BEGIN
-SET
-    SESSION group_concat_max_len = 1000000;
+-- https://leetcode.com/problems/dynamic-pivoting-of-a-table/description/
 
-SET
-    @cols = NULL;
+create procedure PivotProducts()
+begin
+    set session group_concat_max_len = 1000000;
+    set @sql = null;
 
-SELECT
-    GROUP_CONCAT(
-        DISTINCT concat(
-            'max(if(store = ''',
-            store,
-            ''', price, null)) as ',
-            store
-        )
-        ORDER BY
-            store SEPARATOR ','
-    ) INTO @cols
-FROM
-    products;
+    with stores as (
+        select distinct store from products
+    )
 
-SET
-    @sql = concat(
-        'select product_id, ',
-        @cols,
-        ' from products group by product_id'
-    );
+    select
+        group_concat(
+            concat('max(case when store = ''', store, ''' then price else null end) as ', store)
+        order by store separator ','
+        ) into @sql
+    from stores;
 
-prepare qry
-FROM
-    @sql;
+    set @qry = concat('select product_id, ', @sql, ' from products group by product_id');
 
-EXECUTE qry;
-
-deallocate prepare qry;
-
-END // delimiter;
-
+    prepare query from @qry;
+    execute query;
+    deallocate prepare query;
+end
 
