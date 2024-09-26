@@ -1,53 +1,31 @@
--- https://leetcode.com/problems/dynamic-unpivoting-of-a-table/
-SELECT
-    product_id,
-    'LC_Store' AS Store,
-    LC_Store AS price
-FROM
-    Prods
-WHERE
-    LC_Store IS NOT NULL;
+-- https://leetcode.com/problems/dynamic-unpivoting-of-a-table/description/
 
-delimiter / / CREATE PROCEDURE UnpivotProducts() BEGIN
-SET
-    SESSION group_concat_max_len = 1000000;
 
-SET
-    @sql = NULL;
+create procedure UnpivotProducts()
+begin
+    set session group_concat_max_len = 1000000;
+    set @sql = null;
 
-SELECT
-    GROUP_CONCAT(
+    select group_concat(
         concat(
-            'select product_id, ''',
-            store,
+            'select product_id, ''', 
+            column_name, 
             ''' as store, ',
-            store,
+            column_name,
             ' as price from products where ',
-            store,
+            column_name,
             ' is not null'
-        ) SEPARATOR ' union '
-    ) INTO @sql
-FROM
-    (
-        SELECT
-            column_name AS store
-        FROM
-            information_schema.columns
-        WHERE
-            table_name = 'products'
-            AND column_name != 'product_id'
-    ) s;
-
-prepare qry
-FROM
-    @sql;
-
-EXECUTE qry;
-
-deallocate prepare qry;
-
-END / / delimiter;
-
-Error Code: 1064 You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'END / / delimiter' at line 1
-
-select product_id, 'LC_Store' as store, LC_Store as price from prods where LC_Store is not null union select product_id, 'Nozama' as store, Nozama as price from prods where Nozama is not null union select product_id, 'Shop' as store, Shop as price from prods where Shop is not null union select product_id, 'Souq' as store, Souq as price from prods where Souq is not null
+        )
+        separator ' union '
+    ) into @sql
+    from information_schema.columns
+    where 
+        1=1
+        and table_schema = 'test'
+        and table_name = 'products' 
+        and column_name != 'product_id';
+    
+    prepare qry from @sql;
+    execute qry;
+    deallocate prepare qry;
+end
