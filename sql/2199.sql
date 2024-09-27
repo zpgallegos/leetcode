@@ -1,39 +1,22 @@
 -- https://leetcode.com/problems/finding-the-topic-of-each-post/
-WITH cte AS (
-    SELECT
-        DISTINCT posts.post_id,
-        keywords.topic_id AS matching_topic
-    FROM
-        keywords
-        INNER JOIN posts ON posts.content RLIKE concat('\\b', keywords.word, '\\b')
+
+with cte as (
+    select distinct
+        a.post_id,
+        b.topic_id
+    from posts a cross join keywords b
+    where a.content ~* ('\y' || b.word || '\y')
 ),
-matches AS (
-    SELECT
-        post_id,
-        GROUP_CONCAT(
-            matching_topic
-            ORDER BY
-                matching_topic SEPARATOR ','
-        ) AS topic
-    FROM
-        cte
-    GROUP BY
-        post_id
+res as (
+    select
+        a.post_id,
+        string_agg(a.topic_id::varchar, ',' order by a.topic_id) as topic
+    from cte a
+    group by 1
+),
+filled as (
+    select * from res union
+    select post_id, 'Ambiguous!' as topic from posts where post_id not in(select post_id from res)
 )
-SELECT
-    *
-FROM
-    matches
-UNION
-SELECT
-    post_id,
-    'Ambiguous!' AS topic
-FROM
-    posts
-WHERE
-    post_id NOT IN(
-        SELECT
-            post_id
-        FROM
-            matches
-    )
+
+select * from filled order by 1;
