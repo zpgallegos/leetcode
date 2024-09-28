@@ -1,25 +1,16 @@
--- https://leetcode.com/problems/the-change-in-global-rankings/
-SELECT
-    team_id,
-    name,
-    -- have to do this because rank() produces an unsigned integer by default
-    cast(init_rank AS signed) - cast(next_rank AS signed) AS rank_diff
-FROM
-    (
-        SELECT
-            a.team_id,
-            a.name,
-            rank() over(
-                ORDER BY
-                    a.points DESC,
-                    a.name
-            ) AS init_rank,
-            rank() over(
-                ORDER BY
-                    a.points + b.points_change DESC,
-                    a.name
-            ) AS next_rank
-        FROM
-            TeamPoints a
-            INNER JOIN PointsChange b ON a.team_id = b.team_id
-    ) q
+-- https://leetcode.com/problems/the-change-in-global-rankings/description/
+
+with cte as (
+    select
+        a.*,
+        a.points + coalesce(b.points_change, 0) as new_points
+    from teampoints a
+        left join pointschange b on a.team_id = b.team_id
+)
+
+select
+    a.team_id,
+    a.name,
+    rank() over win1 - rank() over win2 as rank_diff
+from cte a
+window win1 as (order by a.points desc, a.name), win2 as (order by a.new_points desc, a.name);
