@@ -1,4 +1,4 @@
-# https://leetcode.com/problems/order-two-columns-independently/description/
+# https://leetcode.com/problems/order-two-columns-independently/
 
 import pandas as pd
 
@@ -11,3 +11,5 @@ def order_two_columns(data: pd.DataFrame) -> pd.DataFrame:
         ),
         axis=1,
     )
+
+

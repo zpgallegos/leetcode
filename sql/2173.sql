@@ -1,20 +1,10 @@
 -- https://leetcode.com/problems/longest-winning-streak/
 
-with incr as (
+with grpd as (
     select
         a.*,
-        case
-        when (lag(a.result, 1) over win) = 'Win' and a.result != 'Win' then 1
-        else 0
-        end as incr
+        sum(case when result != 'Win' then 1 else 0 end) over win as grp
     from matches a
-    window win as(partition by a.player_id  order by a.match_day)
-),
-grpd as (
-    select
-        a.*,
-        sum(incr) over win as grp
-    from incr a
     window win as (
         partition by a.player_id
         order by a.match_day

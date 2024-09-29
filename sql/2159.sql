@@ -1,17 +1,14 @@
--- https://leetcode.com/problems/order-two-columns-independently/description/
+-- https://leetcode.com/problems/order-two-columns-independently/
 
-with a as (
-    select
-        row_number() over(order by first_col) as idx,
-        first_col
-    from data
+with frst as (
+    select a.first_col, row_number() over(order by a.first_col) as rn
+    from data a
 ),
-b as (
-    select
-        row_number() over(order by second_col desc) as idx,
-        second_col
-    from data
+scnd as (
+    select a.second_col, row_number() over(order by a.second_col desc) as rn
+    from data a
 )
 
 select a.first_col, b.second_col
-from a inner join b on a.idx = b.idx
+from frst a inner join scnd b on a.rn = b.rn
+order by a.rn;

@@ -1,31 +1,28 @@
 -- https://leetcode.com/problems/the-number-of-passengers-in-each-bus-i/
-WITH cte AS (
-    SELECT
-        bus_id,
-        arrival_time AS bus_time,
-        coalesce(
-            lag(arrival_time, 1) over(
-                ORDER BY
-                    arrival_time
-            ),
-            0
-        ) AS last_bus
-    FROM
-        buses
+
+with bus as (
+    select
+        b.*,
+        row_number() over(order by b.arrival_time) as bus_idx
+    from buses b
+), cte as (
+    select
+        sub.taken_idx,
+        count(1) as passengers_cnt
+    from (
+        select
+            p.passenger_id,
+            min(b.bus_idx) as taken_idx
+        from passengers p cross join bus b
+        where b.arrival_time >= p.arrival_time
+        group by 1
+    ) sub
+    group by 1
 )
-SELECT
-    *
-FROM
-    (
-        SELECT
-            bus_id,
-            count(b.passenger_id) AS passengers_cnt
-        FROM
-            cte a
-            LEFT JOIN Passengers b ON b.arrival_time > a.last_bus
-            AND b.arrival_time <= a.bus_time
-        GROUP BY
-            bus_id
-    ) s
-ORDER BY
-    bus_id;
+
+select
+    a.bus_id,
+    coalesce(b.passengers_cnt, 0) as passengers_cnt
+from bus a
+    left join cte b on a.bus_idx = b.taken_idx
+order by 1;
