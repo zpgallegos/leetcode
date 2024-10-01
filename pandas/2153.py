@@ -1,28 +1,26 @@
-# https://leetcode.com/problems/the-number-of-passengers-in-each-bus-ii/solutions/
+# https://leetcode.com/problems/the-number-of-passengers-in-each-bus-ii/description/
 
 import pandas as pd
 
 
 def number_of_passengers(buses: pd.DataFrame, passengers: pd.DataFrame) -> pd.DataFrame:
-    buses = buses.set_index("bus_id")
     passengers["waiting"] = True
-    passengers = passengers.set_index("passenger_id")
+    passengers = passengers.sort_values("arrival_time")
 
-    out = {}
-    for bus in buses.itertuples():
-        out[bus.Index] = 0
-        capacity = bus.capacity
-
+    out = []
+    for bus in buses.sort_values("arrival_time").itertuples():
         waiting = passengers[
             (passengers.waiting) & (passengers.arrival_time <= bus.arrival_time)
         ]
-        for p in waiting.itertuples():
-            out[bus.Index] += 1
-            passengers.loc[p.Index, "waiting"] = False
-            capacity -= 1
-            if not capacity:
+        
+        taken = 0
+        for passenger in waiting.itertuples():
+            if taken == bus.capacity:
                 break
 
-    return pd.DataFrame(out.items(), columns=["bus_id", "passengers_cnt"]).sort_values(
-        "bus_id"
-    )
+            passengers.loc[passenger.Index, "waiting"] = False
+            taken += 1
+        
+        out.append({"bus_id": bus.bus_id, "passengers_cnt": taken})
+    
+    return pd.DataFrame(out).sort_values("bus_id")
