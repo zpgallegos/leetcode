@@ -1,15 +1,18 @@
-# https://leetcode.com/problems/the-airport-with-the-most-traffic/
-
+# https://leetcode.com/problems/the-airport-with-the-most-traffic/description/
 
 import pandas as pd
 
 
 def airport_with_most_traffic(flights: pd.DataFrame) -> pd.DataFrame:
-    cnts = (
+    d = (
         pd.concat(
             (
-                flights.rename(columns={"departure_airport": "airport_id"}),
-                flights.rename(columns={"arrival_airport": "airport_id"}),
+                flights[["departure_airport", "flights_count"]].rename(
+                    columns={"departure_airport": "airport_id"}
+                ),
+                flights[["arrival_airport", "flights_count"]].rename(
+                    columns={"arrival_airport": "airport_id"}
+                ),
             ),
             axis=0,
         )
@@ -17,4 +20,4 @@ def airport_with_most_traffic(flights: pd.DataFrame) -> pd.DataFrame:
         .flights_count.sum()
     )
 
-    return pd.DataFrame(cnts[cnts == cnts.max()].index)
+    return pd.DataFrame(d.loc[d == d.max()].index)
