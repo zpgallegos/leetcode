@@ -2,10 +2,14 @@
 
 
 with cte as (
-    select 
-        (select sum(case when score >= 90 then 1 else 0 end) as exc from newyork) as ny,
-        (select sum(case when score >= 90 then 1 else 0 end) as exc from california) as ca
+    select
+        (select count(1) from newyork where score >= 90) as ny,
+        (select count(1) from california where score >= 90) as ca
 )
 
-select case when ny > ca then 'New York University' when ca > ny then 'California University' else 'No Winner' end as winner
-from cte
+select 
+    case 
+    when ny > ca then 'New York University' 
+    when ca > ny then 'California University' 
+    else 'No Winner' end as winner
+from cte;
