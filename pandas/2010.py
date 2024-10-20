@@ -1,4 +1,5 @@
-# https://leetcode.com/problems/the-number-of-seniors-and-juniors-to-join-the-company-ii/
+# https://leetcode.com/problems/the-number-of-seniors-and-juniors-to-join-the-company-ii/description/
+
 
 import pandas as pd
 
@@ -7,20 +8,13 @@ def number_of_joiners(candidates: pd.DataFrame) -> pd.DataFrame:
     out = []
     budget = 70000
 
-    hired = []
-    for exp in ("Senior", "Junior"):
-
-        for row in (
-            candidates.loc[candidates.experience == exp]
-            .sort_values("salary")
-            .itertuples()
-        ):
+    for exp in ["Senior", "Junior"]:
+        grp = candidates.loc[candidates.experience == exp].sort_values("salary")
+        for row in grp.itertuples():
             if row.salary <= budget:
+                out.append(row.employee_id)
                 budget -= row.salary
-                hired.append(row.employee_id)
             else:
                 break
 
-        out.append({"experience": exp, "accepted_candidates": hired})
-
-    return pd.DataFrame({"employee_id": hired})
+    return pd.DataFrame({"employee_id": out})

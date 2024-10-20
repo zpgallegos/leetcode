@@ -1,21 +1,27 @@
--- https://leetcode.com/problems/the-number-of-seniors-and-juniors-to-join-the-company-ii/
+-- https://leetcode.com/problems/the-number-of-seniors-and-juniors-to-join-the-company-ii/description/
 
-with ranked as (
+
+with cte as (
     select
-        employee_id,
-        experience,
-        sum(salary) over (partition by experience order by salary) as spent
-    from Candidates
-), seniors as (
-    select employee_id, spent
-    from ranked
-    where experience = 'Senior' and spent <= 70000
+        a.*,
+        sum(a.salary) over win as cum_spent
+    from candidates a
+    window win as (
+        partition by a.experience 
+        order by a.salary
+        rows between unbounded preceding and current row
+    )
+),
+seniors as (
+    select employee_id, cum_spent
+    from cte 
+    where experience = 'Senior' and cum_spent <= 70000
+),
+juniors as (
+    select employee_id
+    from cte
+    where experience = 'Junior' and cum_spent <= 70000 - (select coalesce(max(cum_spent), 0) from seniors)
 )
 
-select employee_id
-from ranked
-where experience = 'Junior' and spent <= 70000 - coalesce((select max(spent) from seniors), 0)
-
-union
-
-select employee_id from seniors;
+select employee_id from seniors union
+select * from juniors;
