@@ -1,43 +1,26 @@
--- https://leetcode.com/problems/leetcodify-friends-recommendations/
-WITH overlap AS (
-    SELECT
-        a.user_id AS user1,
-        b.user_id AS user2,
-        b.day
-    FROM
-        listens a
-        INNER JOIN listens b ON a.song_id = b.song_id
-        AND a.day = b.day
-    WHERE
-        a.user_id < b.user_id
-    GROUP BY
+-- https://leetcode.com/problems/leetcodify-friends-recommendations/description/
+
+
+with tbl as (
+    select distinct
+        a.user_id as user1_id,
+        b.user_id as user2_id
+    from listens a
+        inner join listens b on a.user_id < b.user_id and a.song_id = b.song_id and a.day = b.day
+    group by
         a.user_id,
         b.user_id,
-        b.day
-    HAVING
-        count(DISTINCT b.song_id) >= 3
+        a.day
+    having count(distinct a.song_id) >= 3
 ),
-recs AS (
-    SELECT
-        DISTINCT user1 AS user_id,
-        user2 AS recommended_id
-    FROM
-        overlap
-    WHERE
-        (user1, user2) NOT IN (
-            SELECT
-                *
-            FROM
-                friendship
-        )
+res as (
+    select 
+        a.user1_id as user_id,
+        a.user2_id as recommended_id
+    from tbl a
+        left join friendship b on a.user1_id = b.user1_id and a.user2_id = b.user2_id
+    where b.user1_id is null
 )
-SELECT
-    *
-FROM
-    recs
-UNION
-SELECT
-    recommended_id AS user_id,
-    user_id AS recommended_id
-FROM
-    recs
+
+select * from res union
+select recommended_id as user_id, user_id as recommended_id from res;
