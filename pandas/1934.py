@@ -1,4 +1,4 @@
-# https://leetcode.com/problems/confirmation-rate/
+# https://leetcode.com/problems/confirmation-rate/description/
 
 import pandas as pd
 

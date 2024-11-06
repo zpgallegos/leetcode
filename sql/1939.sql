@@ -1,13 +1,13 @@
--- https://leetcode.com/problems/users-that-actively-request-confirmation-messages/
+-- https://leetcode.com/problems/users-that-actively-request-confirmation-messages/description/
 
 with cte as (
     select
-        *,
-        time_stamp - lag(time_stamp) over(partition by user_id order by time_stamp) as diff
-
-    from confirmations
+        a.user_id,
+        extract(epoch from a.time_stamp - lag(a.time_stamp, 1) over win) / (60 * 60) as dif
+    from confirmations a
+    window win as (partition by a.user_id order by a.time_stamp)
 )
 
 select distinct user_id
 from cte
-where diff <= 1000000;
+where dif <= 24;
