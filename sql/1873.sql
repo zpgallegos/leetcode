@@ -1,13 +1,11 @@
-
+-- https://leetcode.com/problems/calculate-special-bonus/description/
 
 
 select
-    employee_id,
+    a.employee_id,
     case
-    when mod(employee_id, 2) = 1 and substring(name, 1, 1) <> 'M' then salary
+    when mod(a.employee_id, 2) = 1 and substring(a.name, 1, 1) != 'M' then a.salary
     else 0
     end as bonus
-
-from Employees
-
-order by employee_id;
+from employees a
+order by 1;
