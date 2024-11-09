@@ -1,22 +1,20 @@
-# https://leetcode.com/problemset/pandas/
+# https://leetcode.com/problems/count-salary-categories/submissions/1447251928/
 
 import pandas as pd
 
 
-def cat(sal):
-    if sal < 20000:
-        return "Low Salary"
-    elif sal <= 50000:
-        return "Average Salary"
-    return "High Salary"
-
-
 def count_salary_categories(accounts: pd.DataFrame) -> pd.DataFrame:
-    cats = ["Low Salary", "Average Salary", "High Salary"]
     return (
-        accounts.income.apply(cat)
+        accounts.rename(columns={"income": "category"})
+        .category.apply(
+            lambda x: (
+                "High Salary"
+                if x > 50000
+                else "Average Salary" if x >= 20000 else "Low Salary"
+            )
+        )
         .value_counts()
-        .reindex(cats, fill_value=0)
-        .reset_index(name="accounts_count")
-        .rename(columns={"income": "category"})
+        .rename("accounts_count")
+        .reindex(["High Salary", "Average Salary", "Low Salary"], fill_value=0)
+        .reset_index()
     )
