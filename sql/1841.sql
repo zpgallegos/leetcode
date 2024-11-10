@@ -1,51 +1,38 @@
+-- https://leetcode.com/problems/league-statistics/description/
 
-with games as (
+with mtch as (
     select
-        *,
-        case
-        when home_team_goals > away_team_goals then 3
-        when home_team_goals < away_team_goals then 0
-        else 1
-        end as home_points,
-        case
-        when home_team_goals > away_team_goals then 0
-        when home_team_goals < away_team_goals then 3
-        else 1
-        end as away_points
-    
-    from Matches
-), stats as (
+        a.home_team_id as team_id,
+        a.home_team_goals as goals_for,
+        a.away_team_goals as goals_against
+    from matches a
+
+    union all
 
     select
-        a.*,
-        b.home_team_goals as goals_for,
-        b.away_team_goals as goals_against,
-        b.home_team_goals - b.away_team_goals as goals_diff,
-        b.home_points as points
-    from Teams a inner join games b on a.team_id = b.home_team_id
-
-    union all -- don't drop games that happen to have the same scores
-
+        a.away_team_id as team_id,
+        a.away_team_goals as goals_for,
+        a.home_team_goals as goals_against
+    from matches a
+),
+agg as (
     select
-        a.*,
-        b.away_team_goals as goals_for,
-        b.home_team_goals as goals_against,
-        b.away_team_goals - b.home_team_goals as goals_diff,
-        b.away_points as points
-    from Teams a inner join games b on a.team_id = b.away_team_id
-
-)
-
-select sub.* from (
-    select
-        team_name,
+        b.team_name,
         count(1) as matches_played,
-        sum(points) as points,
         sum(goals_for) as goal_for,
         sum(goals_against) as goal_against,
-        sum(goals_diff) as goal_diff
+        sum(case when a.goals_for > a.goals_against then 3 when a.goals_for = a.goals_gainst then 1 else 0 end) as points
+    from mtch a
+        inner join teams b on a.team_id = b.team_id
+    group by 1
+)
 
-    from stats
-
-    group by team_name
-) sub order by sub.points desc, goal_diff desc, team_name;
+select
+    team_name,
+    matches_played,
+    points,
+    goal_for,
+    goal_against,
+    goal_for - goal_against as goal_diff
+from agg
+order by 3 desc, 6 desc, 1;
