@@ -1,61 +1,45 @@
--- https://leetcode.com/problems/find-interview-candidates/
-WITH medals AS (
-    SELECT
-        contest_id,
-        'gold' AS medal,
-        gold_medal AS user
-    FROM
-        contests
-    UNION
-    SELECT
-        contest_id,
-        'silver' AS medal,
-        silver_medal AS user
-    FROM
-        contests
-    UNION
-    SELECT
-        contest_id,
-        'bronze' AS medal,
-        bronze_medal AS user
-    FROM
-        contests
+-- https://leetcode.com/problems/find-interview-candidates/description/
+
+with cte as (
+    select contest_id, gold_medal as user_id from contests union
+    select contest_id, silver_medal as user_id from contests union
+    select contest_id, bronze_medal as user_id from contests
 ),
-medaled AS (
-    SELECT
-        user,
-        contest_id,
-        lag(contest_id, 2) over win AS lag_2
-    FROM
-        (
-            SELECT
-                DISTINCT user,
-                contest_id
-            FROM
-                medals
-        ) s window win AS (
-            PARTITION by user
-            ORDER BY
-                contest_id
-        )
+incr as (
+    select
+        a.*,
+        case
+        when a.contest_id - lag(a.contest_id, 1) over win > 1 then 1
+        else 0
+        end as incr
+    from cte a
+    window win as (partition by a.user_id order by a.contest_id)
+),
+cum as (
+    select
+        a.*,
+        sum(a.incr) over win as grp
+    from incr a
+    window win as (
+        partition by a.user_id 
+        order by a.contest_id
+        rows between unbounded preceding and current row
+    )
+),
+quals as (
+    select user_id
+    from cum
+    group by user_id, grp
+    having count(1) >= 3
+
+    union
+
+    select gold_medal as user_id
+    from contests
+    group by 1
+    having count(1) >= 3
 )
-SELECT
-    b.name, b.mail
-FROM
-    (
-        SELECT
-            user
-        FROM
-            medals
-        GROUP BY
-            user
-        HAVING
-            sum(medal = 'gold') >= 3
-        UNION
-        SELECT
-            DISTINCT user
-        FROM
-            medaled
-        WHERE
-            contest_id - 2 = lag_2
-    ) res inner join Users b on res.user = b.user_id
+
+select b.name, b.mail
+from quals a
+    inner join users b on a.user_id = b.user_id;
