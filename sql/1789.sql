@@ -1,12 +1,13 @@
--- https://leetcode.com/problems/primary-department-for-each-employee/
+-- https://leetcode.com/problems/primary-department-for-each-employee/description/
+
+with cte as (
+    select
+        a.*,
+        count(1) over win as cnt
+    from employee a
+    window win as (partition by a.employee_id)
+)
 
 select employee_id, department_id
-from employee
-group by employee_id
-having count(1) = 1
-
-union
-
-select employee_id, department_id
-from employee
-where primary_flag = 'Y';
+from cte
+where cnt = 1 or primary_flag = 'Y';
