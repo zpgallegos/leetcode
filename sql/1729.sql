@@ -1,7 +1,7 @@
-select
-    user_id,
-    count(distinct follower_id) as followers_count
-from
-    Followers
-group by
-    user_id
+-- https://leetcode.com/problems/find-followers-count/description/
+
+
+select user_id, count(1) as followers_count
+from followers
+group by 1
+order by 1;
