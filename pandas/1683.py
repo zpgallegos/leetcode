@@ -1,4 +1,5 @@
-# https://leetcode.com/problems/invalid-tweets/?lang=pythondata
+# https://leetcode.com/problems/invalid-tweets/description/
+
 
 import pandas as pd
 
