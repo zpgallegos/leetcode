@@ -1,3 +1,48 @@
+# https://leetcode.com/problems/hopper-company-queries-ii/description/
+
+
+import pandas as pd
+
+
+def hopper_company_queries(
+    drivers: pd.DataFrame, rides: pd.DataFrame, accepted_rides: pd.DataFrame
+) -> pd.DataFrame:
+    begin = "2020-01-01"
+    end = "2020-12-31"
+    all_months = range(1, 13)
+
+    drivers["month"] = drivers.join_date.dt.month
+    rides["month"] = rides.requested_at.dt.month
+
+    drivers = drivers.sort_values("join_date")
+    drivers["i"] = [i + 1 for i in range(len(drivers))]
+
+    driver_counts = (
+        drivers.query(f"join_date >= '{begin}' and join_date <= '{end}'")
+        .groupby("month")
+        .agg(driver_count=("i", "max"))
+        .reindex(all_months, fill_value=0)
+        .sort_index()
+    )
+    driver_counts["driver_count"] = driver_counts.driver_count.cummax()
+
+    drove_counts = (
+        rides.query(f"requested_at >= '{begin}' and requested_at <= '{end}'")
+        .merge(accepted_rides, on="ride_id")
+        .groupby("month")
+        .driver_id.nunique()
+        .reindex(all_months, fill_value=0)
+    )
+
+    out = []
+    for cnt, drv in zip(driver_counts.driver_count, drove_counts):
+        perc = 0 if cnt == 0 else round((drv / cnt) * 100, 2)
+        out.append(perc)
+
+    return pd.DataFrame({"month": all_months, "working_percentage": out})
+
+
+
 # https://leetcode.com/problems/hopper-company-queries-ii/
 
 
