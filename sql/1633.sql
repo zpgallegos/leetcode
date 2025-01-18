@@ -1,16 +1,9 @@
+-- https://leetcode.com/problems/percentage-of-users-attended-a-contest/
 
 
-with cnt as (
-    select count(1)
-    from Users
-)
-
-select *
-from (
-    select
-        contest_id,
-        round((count(1) / (select * from cnt)) * 100, 2) as "percentage"
-    from Register
-    group by contest_id
-) sub
-order by sub.percentage desc, sub.contest_id
+select
+    contest_id,
+    round(count(*)::numeric / (select count(*) from users) * 100, 2) as percentage
+from register
+group by 1
+order by 2 desc, 1;
