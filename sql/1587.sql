@@ -1,5 +1,14 @@
+-- https://leetcode.com/problems/bank-account-summary-ii/description/
 
-select a.name, sum(b.amount) as balance
-from Users a inner join Transactions b on a.account = b.account
-group by a.account
-having sum(b.amount) > 10000;
+with
+
+agg as (
+    select account, sum(amount) as balance
+    from transactions
+    group by 1
+    having sum(amount) > 10000
+)
+
+select b.name, a.balance
+from agg a
+inner join users b on a.account = b.account;
