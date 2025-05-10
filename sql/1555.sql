@@ -1,31 +1,22 @@
--- https://leetcode.com/problems/bank-account-summary/
-WITH trans AS (
-    SELECT
-        paid_by AS user_id,
-        amount * -1 AS amount
-    FROM
-        Transactions
-    UNION
-    ALL
-    SELECT
-        paid_to AS user_id,
-        amount
-    FROM
-        Transactions
+-- https://leetcode.com/problems/bank-account-summary/description/
+
+with
+
+cte as (
+    select paid_by as user_id, -amount as amount from transactions union all
+    select paid_to as user_id, amount from transactions
+),
+
+agg as (
+    select user_id, sum(amount) as bal
+    from cte
+    group by 1
 )
-SELECT
+
+select
     a.user_id,
     a.user_name,
-    a.credit + coalesce(s.net, 0) AS credit,
-    IF(a.credit + coalesce(s.net, 0) < 0, 'Yes', 'No') AS credit_limit_breached
-FROM
-    Users a
-    LEFT JOIN (
-        SELECT
-            user_id,
-            sum(amount) AS net
-        FROM
-            trans
-        GROUP BY
-            user_id
-    ) s ON a.user_id = s.user_id
+    a.credit + coalesce(b.bal, 0) as credit,
+    case when a.credit + coalesce(b.bal, 0) < 0 then 'Yes' else 'No' end as credit_limit_breached
+from users a
+left join agg b on a.user_id = b.user_id
