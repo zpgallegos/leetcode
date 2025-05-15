@@ -2,12 +2,9 @@
 
 with cte as (
     select
-        a.*,
-        row_number() over(partition by a.customer_id order by a.order_date desc) as rn
-    from orders a
-),
-res as (
-    select * from cte where rn <= 3
+        *,
+        row_number() over(partition by customer_id order by order_date desc) as rn
+    from orders
 )
 
 select
@@ -15,6 +12,7 @@ select
     a.customer_id,
     a.order_id,
     a.order_date
-from res a
-    inner join customers b on a.customer_id = b.customer_id
+from cte a
+inner join customers b on a.customer_id = b.customer_id
+where a.rn <= 3
 order by 1, 2, 4 desc;

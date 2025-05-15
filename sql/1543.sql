@@ -1,11 +1,10 @@
 -- https://leetcode.com/problems/fix-product-name-format/description/
 
-with cte as (
-    select trim(lower(product_name)) as product_name, format(sale_date, 'yyyy-MM') as sale_date
-    from sales
-)
-
-select product_name, sale_date, count(1) as total
-from cte
-group by product_name, sale_date
-order by product_name, sale_date;
+-- mysql, no postgres for this question
+select
+    trim(lower(product_name)) as product_name,
+    date_format(sale_date, '%Y-%m') as sale_date,
+    count(1) as total
+from sales
+group by 1, 2
+order by 1, 2;
