@@ -7,16 +7,16 @@ def find_books_with_no_available_copies(
     library_books: pd.DataFrame, borrowing_records: pd.DataFrame
 ) -> pd.DataFrame:
     cnts = (
-        borrowing_records[borrowing_records.return_date.isnull()]
+        borrowing_records[borrowing_records.return_date.isna()]
         .groupby("book_id")
         .size()
+        .rename("current_borrowers")
         .reset_index()
-        .rename(columns={0: "current_borrowers"})
     )
 
     return (
         library_books.merge(cnts, on="book_id")
         .query("total_copies == current_borrowers")
-        .drop("total_copies", axis=1)
+        .drop(columns="total_copies")
         .sort_values(["current_borrowers", "title"], ascending=[False, True])
     )
