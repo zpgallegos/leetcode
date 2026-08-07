@@ -29,3 +29,13 @@ begin
     execute qry;
     deallocate prepare qry;
 end
+
+-- PostgreSQL
+-- Turning each row into JSON allows the store columns to remain dynamic.
+select
+    p.product_id,
+    u.store,
+    u.price::text::integer as price
+from products as p
+cross join lateral jsonb_each(to_jsonb(p) - 'product_id') as u(store, price)
+where u.price <> 'null'::jsonb;
